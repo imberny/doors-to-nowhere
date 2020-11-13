@@ -1,0 +1,116 @@
+[gd_scene load_steps=13 format=2]
+
+[ext_resource path="res://portal.gd" type="Script" id=1]
+
+[sub_resource type="SpatialMaterial" id=1]
+albedo_color = Color( 0.756863, 0.0862745, 0.0862745, 1 )
+
+[sub_resource type="SphereMesh" id=2]
+material = SubResource( 1 )
+radius = 0.5
+
+[sub_resource type="CubeMesh" id=3]
+size = Vector3( 0.2, 0.2, 1 )
+
+[sub_resource type="CubeMesh" id=10]
+size = Vector3( 0.2, 0.2, 50 )
+
+[sub_resource type="SpatialMaterial" id=11]
+flags_transparent = true
+albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
+
+[sub_resource type="CylinderShape" id=4]
+height = 0.7
+
+[sub_resource type="QuadMesh" id=5]
+size = Vector2( 1.08, 1.92 )
+
+[sub_resource type="Shader" id=28]
+code = "shader_type spatial;
+//render_mode world_vertex_coords;
+
+uniform sampler2D camera_texture;
+uniform float distance_factor;
+//
+//void vertex() {
+//
+//}
+
+void fragment() {
+	float dist = distance_factor;//1f;
+	float aspect = VIEWPORT_SIZE.y / VIEWPORT_SIZE.x;
+//	ALBEDO = texture(camera_texture, vec2(SCREEN_UV.x * aspect + SCREEN_UV.x * aspect/2f, SCREEN_UV.y)).xyz;
+	ALBEDO = texture(camera_texture, SCREEN_UV).xyz;
+}"
+
+[sub_resource type="ViewportTexture" id=7]
+viewport_path = NodePath("Viewport")
+
+[sub_resource type="ShaderMaterial" id=8]
+resource_local_to_scene = true
+shader = SubResource( 28 )
+shader_param/distance_factor = 1.0
+shader_param/camera_texture = SubResource( 7 )
+
+[sub_resource type="BoxShape" id=9]
+extents = Vector3( 1, 0.2, 0.35 )
+
+[node name="Portal" type="Area"]
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Dolly" type="Spatial" parent="."]
+
+[node name="MeshInstance" type="MeshInstance" parent="Dolly"]
+layers = 4
+mesh = SubResource( 2 )
+material/0 = null
+
+[node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.445383 )
+layers = 4
+mesh = SubResource( 3 )
+material/0 = null
+
+[node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance/MeshInstance"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -24.7352 )
+layers = 4
+mesh = SubResource( 10 )
+material/0 = SubResource( 11 )
+
+[node name="CollisionShape" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0 )
+shape = SubResource( 4 )
+
+[node name="Viewport" type="Viewport" parent="."]
+size = Vector2( 1920, 1080 )
+
+[node name="Camera" type="Camera" parent="."]
+cull_mask = 1048571
+fov = 85.0
+
+[node name="Quad" type="MeshInstance" parent="."]
+mesh = SubResource( 5 )
+material/0 = SubResource( 8 )
+
+[node name="Boundary" type="StaticBody" parent="."]
+collision_layer = 2048
+collision_mask = 5
+
+[node name="Bottom" type="CollisionShape" parent="Boundary"]
+transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, -1.2, 0 )
+shape = SubResource( 9 )
+
+[node name="Top" type="CollisionShape" parent="Boundary"]
+transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, 1.2, 0 )
+shape = SubResource( 9 )
+
+[node name="Left" type="CollisionShape" parent="Boundary"]
+transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, -1.2, 0, 0 )
+shape = SubResource( 9 )
+
+[node name="Right" type="CollisionShape" parent="Boundary"]
+transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, 1.2, 0, 0 )
+shape = SubResource( 9 )
