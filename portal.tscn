@@ -23,7 +23,7 @@ albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 height = 0.7
 
 [sub_resource type="QuadMesh" id=5]
-size = Vector2( 1.08, 1.92 )
+size = Vector2( 1.5, 1.5 )
 
 [sub_resource type="Shader" id=28]
 code = "shader_type spatial;
@@ -64,6 +64,7 @@ __meta__ = {
 [node name="Dolly" type="Spatial" parent="."]
 
 [node name="MeshInstance" type="MeshInstance" parent="Dolly"]
+visible = false
 layers = 4
 mesh = SubResource( 2 )
 material/0 = null

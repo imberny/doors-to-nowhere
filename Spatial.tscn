@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=2]
+[gd_scene load_steps=29 format=2]
 
 [ext_resource path="res://player.gd" type="Script" id=1]
 [ext_resource path="res://game.gd" type="Script" id=2]
@@ -33,6 +33,8 @@ background_sky = SubResource( 3 )
 
 [sub_resource type="SpatialMaterial" id=5]
 albedo_color = Color( 0, 0.647059, 1, 1 )
+metallic = 0.58
+metallic_specular = 0.8
 
 [sub_resource type="CapsuleMesh" id=6]
 material = SubResource( 5 )
@@ -57,6 +59,40 @@ radius = 0.4
 [sub_resource type="CylinderShape" id=11]
 radius = 0.4
 height = 0.4
+
+[sub_resource type="SpatialMaterial" id=29]
+albedo_color = Color( 0.0901961, 0.152941, 0.807843, 1 )
+
+[sub_resource type="SpatialMaterial" id=30]
+flags_transparent = true
+albedo_color = Color( 0.0784314, 0.133333, 0.956863, 0.705882 )
+
+[sub_resource type="Shader" id=28]
+code = "shader_type spatial;
+//render_mode world_vertex_coords;
+
+uniform sampler2D camera_texture;
+uniform float distance_factor;
+//
+//void vertex() {
+//
+//}
+
+void fragment() {
+	float dist = distance_factor;//1f;
+	float aspect = VIEWPORT_SIZE.y / VIEWPORT_SIZE.x;
+//	ALBEDO = texture(camera_texture, vec2(SCREEN_UV.x * aspect + SCREEN_UV.x * aspect/2f, SCREEN_UV.y)).xyz;
+	ALBEDO = texture(camera_texture, SCREEN_UV).xyz;
+}"
+
+[sub_resource type="ViewportTexture" id=33]
+viewport_path = NodePath("PortalB/Viewport")
+
+[sub_resource type="ShaderMaterial" id=32]
+resource_local_to_scene = true
+shader = SubResource( 28 )
+shader_param/distance_factor = 1.0
+shader_param/camera_texture = SubResource( 33 )
 
 [sub_resource type="SpatialMaterial" id=17]
 albedo_color = Color( 0.117647, 0.0901961, 1, 1 )
@@ -84,8 +120,8 @@ material_override = SubResource( 1 )
 use_collision = true
 collision_layer = 1026
 collision_mask = 5
-width = 31.2072
-depth = 39.2669
+width = 32.0
+depth = 40.0
 
 [node name="CSGBox" type="CSGBox" parent="CSGBox"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 2, 0 )
@@ -96,23 +132,21 @@ height = 4.0
 depth = 4.0
 
 [node name="CSGBox2" type="CSGBox" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, -18.5638 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, -20 )
 material_override = SubResource( 2 )
 use_collision = true
 collision_layer = 1026
 collision_mask = 5
 width = 31.2072
 height = 52.2655
-depth = 2.51117
 
 [node name="CSGBox3" type="CSGBox" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 19.4362 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 20 )
 use_collision = true
 collision_layer = 1026
 collision_mask = 5
 width = 31.2072
 height = 52.2655
-depth = 2.51117
 material = SubResource( 23 )
 
 [node name="CSGBox4" type="CSGBox" parent="."]
@@ -194,7 +228,16 @@ cast_to = Vector3( 0, 0, -20 )
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 )
 
 [node name="PortalB" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1, 0 )
+transform = Transform( -0.258819, 0, -0.965926, 0, 1, 0, 0.965926, 0, -0.258819, 7, 1, 4 )
+
+[node name="MeshInstance" parent="PortalB/Dolly" index="0"]
+material/0 = SubResource( 29 )
+
+[node name="MeshInstance" parent="PortalB/Dolly/MeshInstance/MeshInstance" index="0"]
+material/0 = SubResource( 30 )
+
+[node name="Quad" parent="PortalB" index="4"]
+material/0 = SubResource( 32 )
 
 [node name="Box" type="RigidBody" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 3.79231, 1, 2 )
@@ -285,3 +328,5 @@ material/0 = null
 
 [node name="CollisionShape" type="CollisionShape" parent="Box4"]
 shape = SubResource( 19 )
+
+[editable path="PortalB"]

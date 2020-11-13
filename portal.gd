@@ -15,9 +15,14 @@ func _process(_delta) -> void:
 	var cam := get_viewport().get_camera()
 	
 	var cam_global_origin = cam.global_transform.origin
+	var dist: float = (cam_global_origin - exit_portal.global_transform.origin).length()
 	
 	var dolly = Transform.IDENTITY
-	var rot_transform = Transform(Quat(exit_portal.rotation) * Quat(rotation).inverse() * Quat(cam.global_transform.basis.get_euler()))
+	var cam_half_vert_rot_basis = Basis(cam.global_transform.basis.x, cam.rotation.x * (PI/2.0) / (dist))
+	var exit_basis = global_transform.basis
+	exit_basis = cam_half_vert_rot_basis * exit_basis
+	var cam_half_vertical_rot = Quat(global_transform.basis) * Quat(exit_basis)
+	var rot_transform = Transform(Quat(exit_portal.global_transform.basis) * Quat(global_transform.basis).inverse() * Quat(cam.global_transform.basis))# * cam_half_vertical_rot)
 	dolly.basis.y *= -1.0
 	dolly *= rot_transform
 	dolly.basis.y *= -1.0
