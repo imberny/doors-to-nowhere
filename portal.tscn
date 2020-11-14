@@ -23,6 +23,7 @@ albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 height = 0.6
 
 [sub_resource type="QuadMesh" id=5]
+size = Vector2( 2, 2 )
 
 [sub_resource type="Shader" id=12]
 code = "shader_type spatial;
@@ -92,6 +93,7 @@ size = Vector2( 1920, 1080 )
 msaa = 1
 hdr = false
 keep_3d_linear = true
+render_target_update_mode = 3
 shadow_atlas_size = 2
 
 [node name="Camera" type="Camera" parent="."]

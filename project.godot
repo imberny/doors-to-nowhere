@@ -39,7 +39,7 @@ _global_script_class_icons={
 [application]
 
 config/name="portal_test"
-run/main_scene="res://Spatial.tscn"
+run/main_scene="res://test.tscn"
 config/icon="res://icon.png"
 
 [autoload]
