@@ -23,7 +23,6 @@ albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 height = 0.6
 
 [sub_resource type="QuadMesh" id=5]
-size = Vector2( 1.5, 1.5 )
 
 [sub_resource type="Shader" id=12]
 code = "shader_type spatial;

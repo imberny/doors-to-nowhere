@@ -17,7 +17,7 @@ func _ready() -> void:
 
 func _get_exit_position(entry: Portal, exit: Portal, position: Vector3) -> Vector3:
 	var pos = exit.global_transform.xform(entry.global_transform.xform_inv(position))
-	var dolly_to_exit = exit.global_transform.origin - pos
+	var dolly_to_exit = (exit.global_transform.origin - pos)
 	pos += dolly_to_exit + dolly_to_exit.bounce(exit.global_transform.basis.y)
 	return pos
 

@@ -15,6 +15,7 @@ var cam_angle_min := -88
 var cam_angle_max := 88
 var gravity := 49.0
 var sprint_modifier := 1.6
+var crouch_modifier := 0.3
 
 
 
@@ -53,7 +54,9 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	var speed_modifier = 1.0
 	if Input.is_action_pressed("sprint"):
-		speed_modifier = sprint_modifier
+		speed_modifier *= sprint_modifier
+	if Input.is_action_pressed("crouch"):
+		speed_modifier *= crouch_modifier
 	velocity = BunnyHopMovement.move(
 		_input_dir,
 		velocity,
