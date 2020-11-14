@@ -124,7 +124,7 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.204489 )
 portal_path = NodePath("../PortalB")
 
 [node name="PortalB" parent="." instance=ExtResource( 3 )]
-transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 15.5, 5, 7 )
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 14.3596, 5, 7 )
 portal_path = NodePath("../PortalA")
 
 [node name="PortalA2" parent="." instance=ExtResource( 3 )]

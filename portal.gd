@@ -65,7 +65,7 @@ func _process(_delta) -> void:
 	my_cam.global_transform = dolly
 	my_cam.rotate(my_cam.global_transform.basis.y, PI)
 	var dist2 = (exit_portal.global_transform.origin - dolly.origin).length()
-#	my_cam.near = dist2
+	my_cam.near = max(dist2 - 3.0, 0.01)
 	$Quad.get_surface_material(0).set_shader_param("distance_factor", dist2)
 
 

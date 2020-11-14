@@ -12,7 +12,7 @@ bool portal_culls(vec3 vertex, mat4 cam) {
 	return portal_plane.x * pos.x
 			+ portal_plane.y * pos.y
 			+ portal_plane.z * pos.z
-			+ portal_plane_dist < 0.0;
+			+ portal_plane_dist < -0.1;
 }
 
 void fragment() {
