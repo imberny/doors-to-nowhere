@@ -23,11 +23,17 @@ _global_script_classes=[ {
 "class": "Portal",
 "language": "GDScript",
 "path": "res://portal.gd"
+}, {
+"base": "Object",
+"class": "Utils",
+"language": "GDScript",
+"path": "res://utils.gd"
 } ]
 _global_script_class_icons={
 "BunnyHopMovement": "",
 "Player": "",
-"Portal": ""
+"Portal": "",
+"Utils": ""
 }
 
 [application]
@@ -106,6 +112,7 @@ pause={
 3d_physics/layer_3="dynamic"
 3d_physics/layer_11="portalable"
 3d_physics/layer_12="portal_static"
+3d_physics/layer_13="entity_in_portal"
 
 [rendering]
 

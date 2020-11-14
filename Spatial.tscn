@@ -126,6 +126,9 @@ depth = 40.0
 [node name="CSGBox" type="CSGBox" parent="CSGBox"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 2, 0 )
 
+[node name="CSGBox3" type="CSGBox" parent="CSGBox"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0673294, 2, -1.02244 )
+
 [node name="CSGBox2" type="CSGBox" parent="CSGBox"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 2, 6 )
 height = 4.0
@@ -173,10 +176,13 @@ material = SubResource( 25 )
 environment = SubResource( 4 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="WorldEnvironment"]
-transform = Transform( 1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 5, 0 )
+transform = Transform( 0.549752, 0.774634, 0.312595, 0.16788, -0.469042, 0.867073, 0.818284, -0.424197, -0.387902, 0, 5, 0 )
+light_energy = 3.0
+shadow_enabled = true
 
 [node name="Player" type="KinematicBody" parent="."]
 transform = Transform( 0.980645, 0, 0.195792, 0, 1, 0, -0.195792, 0, 0.980645, 1.28645, 1, 2.35648 )
+collision_mask = 2054
 script = ExtResource( 1 )
 
 [node name="Body" type="MeshInstance" parent="Player"]
@@ -220,15 +226,26 @@ shape = SubResource( 11 )
 [node name="Camera" type="Camera" parent="Player"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.512, 0 )
 cull_mask = 1048573
+near = 0.01
 
 [node name="RayCast" type="RayCast" parent="Player/Camera"]
 cast_to = Vector3( 0, 0, -20 )
 
 [node name="PortalA" parent="." instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0.204489 )
+portal_path = NodePath("../PortalB")
+
+[node name="PortalA2" parent="." instance=ExtResource( 3 )]
+transform = Transform( 0.723931, 0, -0.689872, 0, 1, 0, 0.689872, 0, 0.723931, 4.37962, 1, -5.22624 )
+portal_path = NodePath("../PortalB2")
+
+[node name="PortalB2" parent="." instance=ExtResource( 3 )]
+transform = Transform( 0.223641, 0, 0.974672, 0, 1, 0, -0.974672, 0, 0.223641, -9.63516, 1, 0.204489 )
+portal_path = NodePath("../PortalA2")
 
 [node name="PortalB" parent="." instance=ExtResource( 3 )]
-transform = Transform( -0.258819, 0, -0.965926, 0, 1, 0, 0.965926, 0, -0.258819, 7, 1, 4 )
+transform = Transform( 5.96046e-08, 0, -1, 0, 1, 0, 1, 0, 5.96046e-08, 15.5399, 6.39724, 4 )
+portal_path = NodePath("../PortalA")
 
 [node name="MeshInstance" parent="PortalB/Dolly" index="0"]
 material/0 = SubResource( 29 )

@@ -1,14 +1,30 @@
 class_name Portal
 extends Area
 
+export(NodePath) var portal_path
 
 var exit_portal: Portal setget _set_exit_portal
 var my_cam: Camera
+var _player: Player
 
 func _ready() -> void:
+	if portal_path:
+		exit_portal = get_node(portal_path)
 	my_cam = $Camera
 	remove_child(my_cam)
 	$Viewport.add_child(my_cam)
+
+
+func _get_exit_position(entry: Portal, exit: Portal, position: Vector3) -> Vector3:
+	var pos = exit.global_transform.xform(entry.global_transform.xform_inv(position))
+	var dolly_to_exit = exit.global_transform.origin - pos
+	pos += dolly_to_exit + dolly_to_exit.bounce(exit.global_transform.basis.y)
+	return pos
+
+
+func _get_exit_quaternion(entry: Portal, exit: Portal, quat: Quat) -> Quat:
+	return Quat(exit.global_transform.basis) * Quat(entry.global_transform.basis).inverse() * quat
+
 
 
 func _process(_delta) -> void:
@@ -22,13 +38,12 @@ func _process(_delta) -> void:
 	var exit_basis = global_transform.basis
 	exit_basis = cam_half_vert_rot_basis * exit_basis
 	var cam_half_vertical_rot = Quat(global_transform.basis) * Quat(exit_basis)
-	var rot_transform = Transform(Quat(exit_portal.global_transform.basis) * Quat(global_transform.basis).inverse() * Quat(cam.global_transform.basis))# * cam_half_vertical_rot)
+#	var rot_transform = Transform(Quat(exit_portal.global_transform.basis) * Quat(global_transform.basis).inverse() * Quat(cam.global_transform.basis))# * cam_half_vertical_rot)
 	dolly.basis.y *= -1.0
-	dolly *= rot_transform
+	dolly.basis *= Basis(_get_exit_quaternion(self, exit_portal, Quat(cam.global_transform.basis)))
 	dolly.basis.y *= -1.0
-	dolly.origin = exit_portal.global_transform.xform(global_transform.xform_inv(cam_global_origin))
-	var dolly_to_exit = exit_portal.global_transform.origin - dolly.origin
-	dolly.origin += dolly_to_exit + dolly_to_exit.bounce(exit_portal.global_transform.basis.y)
+	dolly.origin = _get_exit_position(self, exit_portal, cam_global_origin)
+
 	$Dolly.global_transform = dolly
 	$Dolly.rotate(dolly.basis.y, PI)
 	
@@ -43,9 +58,60 @@ func _process(_delta) -> void:
 	# place my cam on dolly
 	my_cam.global_transform = dolly
 	my_cam.rotate(my_cam.global_transform.basis.y, PI)
-	my_cam.near = dolly_to_exit.length()
-	$Quad.get_surface_material(0).set_shader_param("distance_factor", dolly_to_exit.length())
+	var dist2 = (exit_portal.global_transform.origin - dolly.origin).length()
+	my_cam.near = dist2
+	$Quad.get_surface_material(0).set_shader_param("distance_factor", dist2)
+
+
+func _physics_process(delta) -> void:
+	if _player:
+		var cam = get_viewport().get_camera()
+		var cam_dir = cam.global_transform.origin - global_transform.origin
+		if 0 > cam_dir.dot(global_transform.basis.z):
+			var exit_pos = _get_exit_position(self, exit_portal, _player.global_transform.origin)
+			var exit_quat = _get_exit_quaternion(self, exit_portal, _player.global_transform.basis)
+			_player.global_transform.origin = exit_pos
+			_player.global_transform.basis = Basis(exit_quat)
+			_player.rotate(_player.global_transform.basis.y, PI)
+			var velocity_angle = acos(_player.velocity.normalized().dot(-global_transform.basis.z))
+			var exit_forward = exit_portal.global_transform.basis.z.normalized()
+			var exit_up = exit_portal.global_transform.basis.y.normalized()
+			_player.velocity = exit_forward.rotated(exit_up, velocity_angle) * _player.velocity.length()
+#			_player.velocity = (exit_quat * _player.velocity).rotated(_player.global_transform.basis.y, PI)
+#			_player.velocity = (exit_pos - exit_portal.global_transform.origin).normalized() * _player.velocity.length()
+			
+			
 
 
 func _set_exit_portal(value: Portal) -> void:
 	exit_portal = value
+
+
+func _on_body_entered(body):
+	if body is Player:
+		_player = body
+		(body as PhysicsBody).collision_layer ^= 1
+		(body as PhysicsBody).collision_mask ^= 1 << 1
+		(body as PhysicsBody).collision_mask ^= 1 << 2
+	if body is RigidBody:
+		(body as PhysicsBody).collision_layer ^= 2
+		(body as PhysicsBody).collision_mask ^= 1
+		(body as PhysicsBody).collision_mask ^= 1 << 1
+		(body as PhysicsBody).collision_mask ^= 1 << 2
+	
+	(body as PhysicsBody).collision_layer ^= 1 << 12
+
+
+func _on_body_exited(body):
+	if body is Player:
+		_player = null
+		(body as PhysicsBody).collision_layer ^= 1
+		(body as PhysicsBody).collision_mask ^= 1 << 1
+		(body as PhysicsBody).collision_mask ^= 1 << 2
+	if body is RigidBody:
+		(body as PhysicsBody).collision_layer ^= 2
+		(body as PhysicsBody).collision_mask ^= 1
+		(body as PhysicsBody).collision_mask ^= 1 << 1
+		(body as PhysicsBody).collision_mask ^= 1 << 2
+
+	(body as PhysicsBody).collision_layer ^= 1 << 12

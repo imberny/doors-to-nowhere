@@ -13,8 +13,13 @@ var friction := 5.0
 var mouse_sensitivity := 0.008
 var cam_angle_min := -88
 var cam_angle_max := 88
-var gravity := 20.0
+var gravity := 49.0
+var sprint_modifier := 1.6
 
+
+
+func _ready() -> void:
+	$Camera.near = 0.0004
 
 
 func _shoot_primary() -> void:
@@ -32,6 +37,8 @@ func _input(event) -> void:
 	if event.is_action("primary_fire"):
 		_shoot_primary()
 
+
+func _process(delta: float) -> void:
 	var forward := -Input.get_action_strength("forward")
 	var backward := Input.get_action_strength("backward")
 	var left := -Input.get_action_strength("left")
@@ -44,11 +51,14 @@ func _input(event) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	var speed_modifier = 1.0
+	if Input.is_action_pressed("sprint"):
+		speed_modifier = sprint_modifier
 	velocity = BunnyHopMovement.move(
 		_input_dir,
 		velocity,
-		5.0,
-		1.0,
+		friction,
+		speed_modifier,
 		true,
 		delta
 	)

@@ -20,7 +20,7 @@ flags_transparent = true
 albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 
 [sub_resource type="CylinderShape" id=4]
-height = 0.7
+height = 0.6
 
 [sub_resource type="QuadMesh" id=5]
 size = Vector2( 1.5, 1.5 )
@@ -53,9 +53,11 @@ shader_param/distance_factor = 1.0
 shader_param/camera_texture = SubResource( 7 )
 
 [sub_resource type="BoxShape" id=9]
-extents = Vector3( 1, 0.2, 0.35 )
+extents = Vector3( 1, 0.2, 0.3 )
 
 [node name="Portal" type="Area"]
+collision_layer = 0
+collision_mask = 4101
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_group_": true
@@ -87,6 +89,9 @@ shape = SubResource( 4 )
 
 [node name="Viewport" type="Viewport" parent="."]
 size = Vector2( 1920, 1080 )
+msaa = 1
+hdr = false
+shadow_atlas_size = 4
 
 [node name="Camera" type="Camera" parent="."]
 cull_mask = 1048571
@@ -98,7 +103,7 @@ material/0 = SubResource( 8 )
 
 [node name="Boundary" type="StaticBody" parent="."]
 collision_layer = 2048
-collision_mask = 5
+collision_mask = 4096
 
 [node name="Bottom" type="CollisionShape" parent="Boundary"]
 transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, -1.2, 0 )
@@ -115,3 +120,5 @@ shape = SubResource( 9 )
 [node name="Right" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, 1.2, 0, 0 )
 shape = SubResource( 9 )
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="body_exited" from="." to="." method="_on_body_exited"]
