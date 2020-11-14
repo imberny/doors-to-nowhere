@@ -18,12 +18,12 @@ func _ready() -> void:
 func _get_exit_position(entry: Portal, exit: Portal, position: Vector3) -> Vector3:
 	var pos = exit.global_transform.xform(entry.global_transform.xform_inv(position))
 	var dolly_to_exit = (exit.global_transform.origin - pos)
-	pos += dolly_to_exit + dolly_to_exit.bounce(exit.global_transform.basis.y)
+	pos += dolly_to_exit + dolly_to_exit.bounce(exit.global_transform.basis.y.normalized())
 	return pos
 
 
 func _get_exit_quaternion(entry: Portal, exit: Portal, quat: Quat) -> Quat:
-	return Quat(exit.global_transform.basis) * Quat(entry.global_transform.basis).inverse() * quat
+	return Quat(exit.global_transform.basis.orthonormalized()) * Quat(entry.global_transform.basis.orthonormalized()).inverse() * quat
 
 
 
@@ -37,10 +37,10 @@ func _process(_delta) -> void:
 	var cam_half_vert_rot_basis = Basis(cam.global_transform.basis.x, cam.rotation.x * (PI/2.0) / (dist))
 	var exit_basis = global_transform.basis
 	exit_basis = cam_half_vert_rot_basis * exit_basis
-	var cam_half_vertical_rot = Quat(global_transform.basis) * Quat(exit_basis)
+	var cam_half_vertical_rot = Quat(global_transform.basis.orthonormalized()) * Quat(exit_basis.orthonormalized())
 #	var rot_transform = Transform(Quat(exit_portal.global_transform.basis) * Quat(global_transform.basis).inverse() * Quat(cam.global_transform.basis))# * cam_half_vertical_rot)
 	dolly.basis.y *= -1.0
-	dolly.basis *= Basis(_get_exit_quaternion(self, exit_portal, Quat(cam.global_transform.basis)))
+	dolly.basis *= Basis(_get_exit_quaternion(self, exit_portal, Quat(cam.global_transform.basis.orthonormalized())))
 	dolly.basis.y *= -1.0
 	dolly.origin = _get_exit_position(self, exit_portal, cam_global_origin)
 

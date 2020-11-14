@@ -2,27 +2,27 @@
 
 [ext_resource path="res://portal.gd" type="Script" id=1]
 
-[sub_resource type="SpatialMaterial" id=1]
+[sub_resource type="SpatialMaterial" id=15]
 albedo_color = Color( 0.756863, 0.0862745, 0.0862745, 1 )
 
-[sub_resource type="SphereMesh" id=2]
-material = SubResource( 1 )
+[sub_resource type="SphereMesh" id=16]
+material = SubResource( 15 )
 radius = 0.5
 
 [sub_resource type="CubeMesh" id=3]
 size = Vector3( 0.2, 0.2, 1 )
 
-[sub_resource type="CubeMesh" id=10]
+[sub_resource type="CubeMesh" id=17]
 size = Vector3( 0.2, 0.2, 50 )
 
-[sub_resource type="SpatialMaterial" id=11]
+[sub_resource type="SpatialMaterial" id=18]
 flags_transparent = true
 albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 
 [sub_resource type="CylinderShape" id=4]
-height = 0.6
+height = 0.3
 
-[sub_resource type="QuadMesh" id=5]
+[sub_resource type="QuadMesh" id=19]
 size = Vector2( 2, 2 )
 
 [sub_resource type="Shader" id=12]
@@ -69,7 +69,7 @@ __meta__ = {
 [node name="MeshInstance" type="MeshInstance" parent="Dolly"]
 visible = false
 layers = 4
-mesh = SubResource( 2 )
+mesh = SubResource( 16 )
 material/0 = null
 
 [node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance"]
@@ -81,11 +81,11 @@ material/0 = null
 [node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance/MeshInstance"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -24.7352 )
 layers = 4
-mesh = SubResource( 10 )
-material/0 = SubResource( 11 )
+mesh = SubResource( 17 )
+material/0 = SubResource( 18 )
 
 [node name="CollisionShape" type="CollisionShape" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0 )
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, -9.12812e-09, 0.0560279 )
 shape = SubResource( 4 )
 
 [node name="Viewport" type="Viewport" parent="."]
@@ -101,7 +101,7 @@ cull_mask = 1048571
 fov = 85.0
 
 [node name="Quad" type="MeshInstance" parent="."]
-mesh = SubResource( 5 )
+mesh = SubResource( 19 )
 material/0 = SubResource( 14 )
 
 [node name="Boundary" type="StaticBody" parent="."]
