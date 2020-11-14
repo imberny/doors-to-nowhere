@@ -39,7 +39,7 @@ func _input(event) -> void:
 		_shoot_primary()
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	var forward := -Input.get_action_strength("forward")
 	var backward := Input.get_action_strength("backward")
 	var left := -Input.get_action_strength("left")
