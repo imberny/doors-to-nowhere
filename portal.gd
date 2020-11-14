@@ -13,6 +13,12 @@ func _ready() -> void:
 	my_cam = $Camera
 	remove_child(my_cam)
 	$Viewport.add_child(my_cam)
+	var plane_normal = global_transform.basis.z.normalized()
+	var plane_dist = global_transform.origin.project(plane_normal).length()
+	var portal_plane = Plane(plane_normal, plane_dist)
+	
+	$Quad.get_surface_material(0).set_shader_param("portal_plane", -plane_normal)
+	$Quad.get_surface_material(0).set_shader_param("portal_plane_dist", portal_plane.d)
 
 
 func _get_exit_position(entry: Portal, exit: Portal, position: Vector3) -> Vector3:
@@ -59,7 +65,7 @@ func _process(_delta) -> void:
 	my_cam.global_transform = dolly
 	my_cam.rotate(my_cam.global_transform.basis.y, PI)
 	var dist2 = (exit_portal.global_transform.origin - dolly.origin).length()
-	my_cam.near = dist2
+#	my_cam.near = dist2
 	$Quad.get_surface_material(0).set_shader_param("distance_factor", dist2)
 
 

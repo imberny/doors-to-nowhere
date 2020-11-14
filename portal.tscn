@@ -1,6 +1,7 @@
 [gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://portal.gd" type="Script" id=1]
+[ext_resource path="res://portal.shader" type="Shader" id=2]
 
 [sub_resource type="SpatialMaterial" id=15]
 albedo_color = Color( 0.756863, 0.0862745, 0.0862745, 1 )
@@ -25,33 +26,16 @@ height = 0.3
 [sub_resource type="QuadMesh" id=19]
 size = Vector2( 2, 2 )
 
-[sub_resource type="Shader" id=12]
-code = "shader_type spatial;
-//render_mode world_vertex_coords;
-render_mode unshaded;
-
-uniform sampler2D camera_texture;
-uniform float distance_factor;
-//
-//void vertex() {
-//
-//}
-
-void fragment() {
-	float dist = distance_factor;//1f;
-	float aspect = VIEWPORT_SIZE.y / VIEWPORT_SIZE.x;
-//	ALBEDO = texture(camera_texture, vec2(SCREEN_UV.x * aspect + SCREEN_UV.x * aspect/2f, SCREEN_UV.y)).xyz;
-	ALBEDO = texture(camera_texture, SCREEN_UV).xyz;
-}"
-
-[sub_resource type="ViewportTexture" id=13]
+[sub_resource type="ViewportTexture" id=20]
 viewport_path = NodePath("Viewport")
 
 [sub_resource type="ShaderMaterial" id=14]
 resource_local_to_scene = true
-shader = SubResource( 12 )
+shader = ExtResource( 2 )
 shader_param/distance_factor = 1.0
-shader_param/camera_texture = SubResource( 13 )
+shader_param/portal_plane = null
+shader_param/portal_plane_dist = null
+shader_param/camera_texture = SubResource( 20 )
 
 [sub_resource type="BoxShape" id=9]
 extents = Vector3( 1, 0.2, 0.3 )
