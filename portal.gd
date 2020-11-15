@@ -10,9 +10,12 @@ var _player: Player
 onready var _bodies_in_portal := {}
 onready var _body_doubles := {}
 
+var _to_exit: Transform
+
+
 func _ready() -> void:
 	if portal_path:
-		exit_portal = get_node(portal_path)
+		self.exit_portal = get_node(portal_path)
 	my_cam = $Camera
 	remove_child(my_cam)
 	$Viewport.add_child(my_cam)
@@ -23,11 +26,12 @@ func _ready() -> void:
 	$Quad.get_surface_material(0).set_shader_param("portal_plane_dist", portal_plane.d)
 
 
-func _get_exit_position(entry: Portal, exit: Portal, position: Vector3) -> Vector3:
-	var entry_to_exit = exit.global_transform * entry.global_transform.affine_inverse()
-	var exit_pos = entry_to_exit * position
-	var exit_delta_pos = exit.global_transform.origin - exit_pos
-	exit_pos += exit_delta_pos + exit_delta_pos.bounce(exit.global_transform.basis.y.normalized())
+func _get_exit_position(position: Vector3) -> Vector3:
+#	var entry_to_exit = exit_portal.transform * transform.affine_inverse()
+#	var exit_pos = entry_to_exit * position
+	var exit_pos = _to_exit * position
+	var exit_delta_pos = exit_portal.transform.origin - exit_pos
+	exit_pos += exit_delta_pos + exit_delta_pos.bounce(exit_portal.transform.basis.y.normalized())
 	return exit_pos
 
 
@@ -41,17 +45,18 @@ func _get_exit_quaternion(entry: Portal, exit: Portal, quat: Quat) -> Quat:
 func _process(_delta) -> void:
 	var cam := get_viewport().get_camera()
 	
+	
 	var cam_global_origin = cam.global_transform.origin
-	var dist: float = (cam_global_origin - exit_portal.global_transform.origin).length()
+#	var cam_global_origin = cam.get_parent().transform * cam.transform.origin
+#	var cam_basis = (cam.get_parent().transform * cam.transform).basis.orthonormalized()
+	var cam_basis = cam.global_transform.basis
+	var dist: float = (cam_global_origin - exit_portal.transform.origin).length()
 	
 	var dolly = Transform.IDENTITY
-	var cam_half_vert_rot_basis = Basis(cam.global_transform.basis.x, cam.rotation.x * (PI/2.0) / (dist))
-	var exit_basis = global_transform.basis
-	exit_basis = cam_half_vert_rot_basis * exit_basis
 	dolly.basis.y *= -1.0
-	dolly.basis *= Basis(_get_exit_quaternion(self, exit_portal, Quat(cam.global_transform.basis.orthonormalized())))
+	dolly.basis *= Basis(_get_exit_quaternion(self, exit_portal, Quat(cam_basis)))
 	dolly.basis.y *= -1.0
-	dolly.origin = _get_exit_position(self, exit_portal, cam_global_origin)
+	dolly.origin = _get_exit_position(cam_global_origin)
 
 	# place my cam on dolly
 	my_cam.global_transform = dolly
@@ -68,16 +73,17 @@ func _physics_process(delta) -> void:
 		# predict next frame pos
 		var cam_next_pos = cam_pos + _player.velocity * delta
 		var cam_next_dir = (cam_next_pos - global_transform.origin).normalized()
-		if 0 > cam_next_dir.dot(global_transform.basis.z):
-			var exit_pos = _get_exit_position(self, exit_portal, _player.global_transform.origin)
+		if 0 > cam_next_dir.dot(transform.basis.z):
+			var exit_pos = _get_exit_position(_player.transform.origin)
 			var exit_quat = _get_exit_quaternion(self, exit_portal, _player.global_transform.basis)
-			_player.global_transform.origin = exit_pos
+			_player.transform.origin = exit_pos
 			_player.global_transform.basis = Basis(exit_quat)
 			_player.rotate(_player.global_transform.basis.y, PI)
 			var velocity_angle = acos(_player.velocity.normalized().dot(-global_transform.basis.z))
 			var exit_forward = exit_portal.global_transform.basis.z.normalized()
 			var exit_up = exit_portal.global_transform.basis.y.normalized()
 			_player.velocity = exit_forward.rotated(exit_up, velocity_angle) * _player.velocity.length()
+			_detach_player()
 	for body_id in _bodies_in_portal:
 		var rbody := _bodies_in_portal[body_id] as RigidBody
 		# update double
@@ -96,7 +102,7 @@ func _physics_process(delta) -> void:
 		var body_next_pos = rbody.global_transform.origin + rbody.linear_velocity * delta
 		var body_next_dir = (body_next_pos - global_transform.origin).normalized()
 		if 0 > body_next_dir.dot(global_transform.basis.z):
-			var exit_pos = _get_exit_position(self, exit_portal, rbody.global_transform.origin)
+			var exit_pos = _get_exit_position(rbody.transform.origin)
 			var exit_quat = _get_exit_quaternion(self, exit_portal, rbody.global_transform.basis)
 			rbody.global_transform.origin = exit_pos
 			rbody.global_transform.basis = Basis(exit_quat)
@@ -109,23 +115,28 @@ func _physics_process(delta) -> void:
 
 func _set_exit_portal(value: Portal) -> void:
 	exit_portal = value
+	_to_exit = exit_portal.transform * transform.affine_inverse()
+
+
+func _attach_player(player: Player) -> void:
+	_player = player
+	_player.collision_layer ^= 1
+	_player.collision_mask ^= 1 << 1
+	_player.collision_mask ^= 1 << 2
 
 
 func _on_body_entered(body):
 	if body is Player:
-		_player = body
-		(body as PhysicsBody).collision_layer ^= 1
-		(body as PhysicsBody).collision_mask ^= 1 << 1
-		(body as PhysicsBody).collision_mask ^= 1 << 2
+		_attach_player(body)
 	if body is RigidBody and not body.is_in_group("doubles"):
 		_bodies_in_portal[body.get_rid()] = body
 		var double: RigidBody = body.duplicate()
 		double.add_to_group("doubles")
 		_body_doubles[body.get_rid()] = double
 		add_child(double)
-		double.global_transform.origin = _get_exit_position(self, exit_portal, body.global_transform.origin)
-		var double_quat := _get_exit_quaternion(self, exit_portal, Quat(body.global_transform.basis))
-		double.global_transform.basis = Basis(double_quat)
+		double.transform.origin = _get_exit_position(body.transform.origin)
+#		var double_quat := _get_exit_quaternion(self, exit_portal, Quat(body.global_transform.basis))
+#		double.global_transform.basis = Basis(double_quat)
 		(body as PhysicsBody).collision_layer ^= 2
 		(body as PhysicsBody).collision_mask ^= 1
 		(body as PhysicsBody).collision_mask ^= 1 << 1
@@ -134,12 +145,18 @@ func _on_body_entered(body):
 	(body as PhysicsBody).collision_layer ^= 1 << 12
 
 
+func _detach_player() -> void:
+	if not _player:
+		return
+	_player.collision_layer ^= 1
+	_player.collision_mask ^= 1 << 1
+	_player.collision_mask ^= 1 << 2
+	_player = null
+
+
 func _on_body_exited(body):
 	if body is Player:
-		_player = null
-		(body as PhysicsBody).collision_layer ^= 1
-		(body as PhysicsBody).collision_mask ^= 1 << 1
-		(body as PhysicsBody).collision_mask ^= 1 << 2
+		_detach_player()
 	if body is RigidBody and not body.is_in_group("doubles"):
 		var double = _body_doubles[body.get_rid()]
 		remove_child(double)
