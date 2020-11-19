@@ -5,31 +5,29 @@ export(NodePath) var portal_path
 export(float) var zoom = 1.0
 
 var exit_portal: Portal setget _set_exit_portal
-var my_cam: Camera
 var _player: Player
+onready var _viewport := $Viewport
+onready var _camera := $Viewport/Camera
+onready var _surface := $Surface
+onready var _exit_point := $ExitPoint
 onready var _bodies_in_portal := {}
 onready var _body_doubles := {}
-
-var _to_exit: Transform
 
 
 func _ready() -> void:
 	if portal_path:
 		self.exit_portal = get_node(portal_path)
-	my_cam = $Camera
-	remove_child(my_cam)
-	$Viewport.add_child(my_cam)
 	var plane_normal = global_transform.basis.z.normalized()
 	var plane_dist = global_transform.origin.project(plane_normal).length()
 	var portal_plane = Plane(plane_normal, plane_dist)
-	$Quad.get_surface_material(0).set_shader_param("portal_plane", -plane_normal)
-	$Quad.get_surface_material(0).set_shader_param("portal_plane_dist", portal_plane.d)
+	var portal_material: ShaderMaterial = _surface.get_surface_material(0)
+	portal_material.set_shader_param("portal_plane", -plane_normal)
+	portal_material.set_shader_param("portal_plane_dist", portal_plane.d)
 
 
 func _get_exit_position(position: Vector3) -> Vector3:
-#	var entry_to_exit = exit_portal.transform * transform.affine_inverse()
-#	var exit_pos = entry_to_exit * position
-	var exit_pos = _to_exit * position
+	var entry_to_exit = exit_portal.transform * transform.affine_inverse()
+	var exit_pos = entry_to_exit * position
 	var exit_delta_pos = exit_portal.transform.origin - exit_pos
 	exit_pos += exit_delta_pos + exit_delta_pos.bounce(exit_portal.transform.basis.y.normalized())
 	return exit_pos
@@ -42,28 +40,57 @@ func _get_exit_quaternion(entry: Portal, exit: Portal, quat: Quat) -> Quat:
 	return entry_to_exit * quat
 
 
-func _process(_delta) -> void:
-	var cam := get_viewport().get_camera()
-	
-	
-	var cam_global_origin = cam.global_transform.origin
-#	var cam_global_origin = cam.get_parent().transform * cam.transform.origin
-#	var cam_basis = (cam.get_parent().transform * cam.transform).basis.orthonormalized()
-	var cam_basis = cam.global_transform.basis
-	var dist: float = (cam_global_origin - exit_portal.transform.origin).length()
-	
-	var dolly = Transform.IDENTITY
-	dolly.basis.y *= -1.0
-	dolly.basis *= Basis(_get_exit_quaternion(self, exit_portal, Quat(cam_basis)))
-	dolly.basis.y *= -1.0
-	dolly.origin = _get_exit_position(cam_global_origin)
+func teleport_rotation(local_rotation: Quat) -> Quat:
+	return Quat(_exit_point.global_transform.basis) * local_rotation
 
-	# place my cam on dolly
-	my_cam.global_transform = dolly
-	my_cam.rotate(my_cam.global_transform.basis.y, PI)
-	var dist2 = (exit_portal.global_transform.origin - dolly.origin).length()
-	my_cam.near = max(dist2 - 3.0, 0.01)
-	$Quad.get_surface_material(0).set_shader_param("zoom", zoom)
+
+func teleport_local_xform(xform: Transform) -> Transform:
+	return _exit_point.global_transform * xform
+
+
+func teleport_quat(quat: Quat) -> Quat:
+	var to_global_quat := Quat(_exit_point.global_transform.basis.orthonormalized())
+	return to_global_quat * quat
+
+
+func teleport_origin(origin: Vector3) -> Vector3:
+	return _exit_point.to_global(origin)
+
+
+func teleport_global_quat(quat: Quat) -> Quat:
+	var local_quat := (Quat(global_transform.basis).inverse() * quat).normalized()
+	return self.exit_portal.teleport_quat(local_quat)
+
+
+func teleport_global_origin(origin: Vector3) -> Vector3:
+	var local_origin := to_local(origin)
+	return self.exit_portal.teleport_origin(local_origin)
+
+
+func teleport_global_xform(xform: Transform) -> Transform:
+	var local_quat := (Quat(global_transform.basis).inverse() * Quat(xform.basis.orthonormalized())).normalized()
+	var exit_quat := self.exit_portal.teleport_quat(local_quat)
+
+	var local_origin := to_local(xform.origin)
+	var exit_origin = self.exit_portal.teleport_origin(local_origin)
+
+	return Transform(exit_quat, exit_origin)
+
+
+func _process(_delta) -> void:
+	var main_cam := get_viewport().get_camera()
+	var main_cam_origin = main_cam.global_transform.origin 
+
+	var forward := global_transform.basis.z.normalized()
+	var up := global_transform.basis.y.normalized()
+	var portal_plane := Plane(forward, global_transform.origin.dot(forward))
+	var cam_origin_on_portal := portal_plane.project(main_cam_origin)
+	var cam_distance := cam_origin_on_portal.distance_to(main_cam_origin)
+
+	_camera.global_transform = teleport_global_xform(main_cam.global_transform)
+	
+	_camera.near = max(cam_distance - 3.0, 0.01)
+	_surface.get_surface_material(0).set_shader_param("zoom", zoom)
 
 
 func _physics_process(delta) -> void:
@@ -115,7 +142,6 @@ func _physics_process(delta) -> void:
 
 func _set_exit_portal(value: Portal) -> void:
 	exit_portal = value
-	_to_exit = exit_portal.transform * transform.affine_inverse()
 
 
 func _attach_player(player: Player) -> void:

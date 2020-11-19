@@ -1,24 +1,7 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://portal.gd" type="Script" id=1]
 [ext_resource path="res://portal.shader" type="Shader" id=2]
-
-[sub_resource type="SpatialMaterial" id=1]
-albedo_color = Color( 0.756863, 0.0862745, 0.0862745, 1 )
-
-[sub_resource type="SphereMesh" id=2]
-material = SubResource( 1 )
-radius = 0.5
-
-[sub_resource type="CubeMesh" id=3]
-size = Vector3( 0.2, 0.2, 1 )
-
-[sub_resource type="CubeMesh" id=4]
-size = Vector3( 0.2, 0.2, 50 )
-
-[sub_resource type="SpatialMaterial" id=5]
-flags_transparent = true
-albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 
 [sub_resource type="CylinderShape" id=6]
 height = 0.3
@@ -50,26 +33,6 @@ __meta__ = {
 }
 zoom = 1.305
 
-[node name="Dolly" type="Spatial" parent="."]
-
-[node name="MeshInstance" type="MeshInstance" parent="Dolly"]
-visible = false
-layers = 4
-mesh = SubResource( 2 )
-material/0 = null
-
-[node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.445383 )
-layers = 4
-mesh = SubResource( 3 )
-material/0 = null
-
-[node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance/MeshInstance"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -24.7352 )
-layers = 4
-mesh = SubResource( 4 )
-material/0 = SubResource( 5 )
-
 [node name="CollisionShape" type="CollisionShape" parent="."]
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, -9.12812e-09, 0.0560279 )
 shape = SubResource( 6 )
@@ -81,11 +44,11 @@ hdr = false
 keep_3d_linear = true
 shadow_atlas_size = 2
 
-[node name="Camera" type="Camera" parent="."]
+[node name="Camera" type="Camera" parent="Viewport"]
 cull_mask = 1048571
 fov = 85.0
 
-[node name="Quad" type="MeshInstance" parent="."]
+[node name="Surface" type="MeshInstance" parent="."]
 mesh = SubResource( 7 )
 material/0 = SubResource( 9 )
 
@@ -108,5 +71,8 @@ shape = SubResource( 10 )
 [node name="Right" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, 1.2, 0, 0 )
 shape = SubResource( 10 )
+
+[node name="ExitPoint" type="Spatial" parent="."]
+transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0, 0 )
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
 [connection signal="body_exited" from="." to="." method="_on_body_exited"]
