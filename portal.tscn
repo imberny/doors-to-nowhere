@@ -3,42 +3,42 @@
 [ext_resource path="res://portal.gd" type="Script" id=1]
 [ext_resource path="res://portal.shader" type="Shader" id=2]
 
-[sub_resource type="SpatialMaterial" id=15]
+[sub_resource type="SpatialMaterial" id=1]
 albedo_color = Color( 0.756863, 0.0862745, 0.0862745, 1 )
 
-[sub_resource type="SphereMesh" id=16]
-material = SubResource( 15 )
+[sub_resource type="SphereMesh" id=2]
+material = SubResource( 1 )
 radius = 0.5
 
 [sub_resource type="CubeMesh" id=3]
 size = Vector3( 0.2, 0.2, 1 )
 
-[sub_resource type="CubeMesh" id=17]
+[sub_resource type="CubeMesh" id=4]
 size = Vector3( 0.2, 0.2, 50 )
 
-[sub_resource type="SpatialMaterial" id=18]
+[sub_resource type="SpatialMaterial" id=5]
 flags_transparent = true
 albedo_color = Color( 0.956863, 0.0784314, 0.0784314, 0.705882 )
 
-[sub_resource type="CylinderShape" id=4]
+[sub_resource type="CylinderShape" id=6]
 height = 0.3
 
-[sub_resource type="QuadMesh" id=19]
+[sub_resource type="QuadMesh" id=7]
 size = Vector2( 2, 2 )
 
-[sub_resource type="ViewportTexture" id=20]
+[sub_resource type="ViewportTexture" id=8]
 viewport_path = NodePath("Viewport")
 
-[sub_resource type="ShaderMaterial" id=14]
+[sub_resource type="ShaderMaterial" id=9]
 resource_local_to_scene = true
 shader = ExtResource( 2 )
 shader_param/distance_factor = 1.0
 shader_param/zoom = 2.045
 shader_param/portal_plane = null
 shader_param/portal_plane_dist = null
-shader_param/camera_texture = SubResource( 20 )
+shader_param/camera_texture = SubResource( 8 )
 
-[sub_resource type="BoxShape" id=9]
+[sub_resource type="BoxShape" id=10]
 extents = Vector3( 1, 0.2, 0.3 )
 
 [node name="Portal" type="Area"]
@@ -55,7 +55,7 @@ zoom = 1.305
 [node name="MeshInstance" type="MeshInstance" parent="Dolly"]
 visible = false
 layers = 4
-mesh = SubResource( 16 )
+mesh = SubResource( 2 )
 material/0 = null
 
 [node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance"]
@@ -67,12 +67,12 @@ material/0 = null
 [node name="MeshInstance" type="MeshInstance" parent="Dolly/MeshInstance/MeshInstance"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -24.7352 )
 layers = 4
-mesh = SubResource( 17 )
-material/0 = SubResource( 18 )
+mesh = SubResource( 4 )
+material/0 = SubResource( 5 )
 
 [node name="CollisionShape" type="CollisionShape" parent="."]
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, -9.12812e-09, 0.0560279 )
-shape = SubResource( 4 )
+shape = SubResource( 6 )
 
 [node name="Viewport" type="Viewport" parent="."]
 size = Vector2( 1920, 1080 )
@@ -86,8 +86,8 @@ cull_mask = 1048571
 fov = 85.0
 
 [node name="Quad" type="MeshInstance" parent="."]
-mesh = SubResource( 19 )
-material/0 = SubResource( 14 )
+mesh = SubResource( 7 )
+material/0 = SubResource( 9 )
 
 [node name="Boundary" type="StaticBody" parent="."]
 collision_layer = 2048
@@ -95,18 +95,18 @@ collision_mask = 4096
 
 [node name="Bottom" type="CollisionShape" parent="Boundary"]
 transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, -1.2, 0 )
-shape = SubResource( 9 )
+shape = SubResource( 10 )
 
 [node name="Top" type="CollisionShape" parent="Boundary"]
 transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, 1.2, 0 )
-shape = SubResource( 9 )
+shape = SubResource( 10 )
 
 [node name="Left" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, -1.2, 0, 0 )
-shape = SubResource( 9 )
+shape = SubResource( 10 )
 
 [node name="Right" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, 1.2, 0, 0 )
-shape = SubResource( 9 )
+shape = SubResource( 10 )
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
 [connection signal="body_exited" from="." to="." method="_on_body_exited"]
