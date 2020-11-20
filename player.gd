@@ -1,6 +1,8 @@
 class_name Player
 extends KinematicBody
 
+export(PackedScene) var portal_scene
+
 
 
 var is_main_view: bool setget _set_is_main_view
@@ -19,17 +21,25 @@ var crouch_modifier := 0.3
 
 var model: MeshInstance setget , _get_model
 
+onready var _portal_a = portal_scene.instance()
+onready var _portal_b = portal_scene.instance()
 
 
 func _ready() -> void:
 	$Camera.near = 0.0004
+	_portal_a.exit_portal = _portal_b
+	_portal_b.exit_portal = _portal_a
+	_portal_a.transform.origin.y = -100
+	_portal_b.transform.origin.y = -100
+	get_tree().current_scene.call_deferred("add_child", _portal_a)
+	get_tree().current_scene.call_deferred("add_child", _portal_b)
 
 
-func _shoot_primary() -> void:
+func _place_portal(portal) -> void:
 	if $Camera/RayCast.is_colliding():
-		var body = $Camera/RayCast.get_collider()
-		add_collision_exception_with(body)
-		
+		var point: Vector3 = $Camera/RayCast.get_collision_point()
+		var normal: Vector3 = $Camera/RayCast.get_collision_normal()
+		portal.look_at_from_position(point + 0.05 * normal, point - normal, Vector3.UP)
 
 
 func _input(event) -> void:
@@ -37,8 +47,10 @@ func _input(event) -> void:
 		rotate_y(-event.relative.x * mouse_sensitivity)
 		$Camera.rotate_x(-event.relative.y * mouse_sensitivity)
 		$Camera.rotation.x = clamp($Camera.rotation.x, deg2rad(cam_angle_min), deg2rad(cam_angle_max))
-	if event.is_action("primary_fire"):
-		_shoot_primary()
+	if event.is_action_pressed("primary_fire"):
+		_place_portal(_portal_a)
+	if event.is_action_pressed("secondary_fire"):
+		_place_portal(_portal_b)
 
 
 func _process(_delta: float) -> void:

@@ -30,16 +30,16 @@ _global_script_classes=[ {
 "path": "res://portal_frustum.gd"
 }, {
 "base": "Object",
-"class": "Utils",
+"class": "Util",
 "language": "GDScript",
-"path": "res://utils.gd"
+"path": "res://util.gd"
 } ]
 _global_script_class_icons={
 "BunnyHopMovement": "",
 "Player": "",
 "Portal": "",
 "PortalFrustum": "",
-"Utils": ""
+"Util": ""
 }
 
 [application]
@@ -50,7 +50,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-Globals="*res://globals.gd"
+Global="*res://global.gd"
 
 [display]
 

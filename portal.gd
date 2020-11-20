@@ -6,8 +6,6 @@ signal body_exited_back(body)
 
 
 export(NodePath) var portal_path
-export(float) var shader_scale = 0.766
-export(ShaderMaterial) var clip_shader
 
 var exit_portal: Portal setget _set_exit_portal
 onready var _viewport := $Viewport
@@ -34,27 +32,20 @@ func _ready() -> void:
 	if portal_path:
 		self.exit_portal = get_node(portal_path)
 #	_cull_layer = Globals.get_portal_cull()
-	_camera.cull_mask = Utils.bit_mask_unset(
+	_camera.cull_mask = Util.bit_mask_unset(
 		_camera.cull_mask,
-		Utils.VisualLayers.PORTAL_CULL
+		Util.VisualLayers.PORTAL_CULL
 	)
-	_surface.layers = Utils.bit_mask_unset(
+	_surface.layers = Util.bit_mask_unset(
 		_surface.layers,
-		Utils.VisualLayers.MAIN_CAMERA
+		Util.VisualLayers.MAIN_CAMERA
 	)
-	_surface.layers = Utils.bit_mask_set(
+	_surface.layers = Util.bit_mask_set(
 		_surface.layers,
-		Utils.VisualLayers.PORTAL_CULL
+		Util.VisualLayers.PORTAL_CULL
 	)
-	
-	var plane_normal = global_transform.basis.z.normalized()
-#	var plane_dist = global_transform.origin.project(plane_normal).length()
-	var plane_dist = global_transform.origin.dot(plane_normal)
-	var portal_plane = Plane(plane_normal, plane_dist)
-	var portal_shader: ShaderMaterial = _surface.get_surface_material(0)
-	clip_shader.set_shader_param("portal_plane", -plane_normal)
-	clip_shader.set_shader_param("portal_plane_dist", portal_plane.d)
-	portal_shader.set_shader_param("scale", shader_scale)
+
+	_camera.fov = get_viewport().get_camera().fov
 
 
 func teleport_quat(quat: Quat) -> Quat:
@@ -207,24 +198,6 @@ func _find_mesh_instance(body: PhysicsBody) -> MeshInstance:
 	return null
 
 
-func _apply_clip_plane(body: PhysicsBody) -> void:
-#	for intersection in _intersect_behind():
-#		var collider = intersection.collider
-	var mesh_instance := _find_mesh_instance(body)
-	if mesh_instance:
-#		var material_count := mesh_instance.get_surface_material_count()
-		mesh_instance.set_surface_material(0, clip_shader)
-
-
-func _remove_clip_plane(body: PhysicsBody) -> void:
-#	for intersection in _intersect_behind():
-#		var collider = intersection.collider
-	var mesh_instance := _find_mesh_instance(body)
-	if mesh_instance:
-#		var material_count := mesh_instance.get_surface_material_count()
-		mesh_instance.set_surface_material(0, null)
-
-
 func _clear_collision_exceptions(physics_body : PhysicsBody) -> void:
 	for exception in physics_body.get_collision_exceptions():
 		physics_body.remove_collision_exception_with(exception)
@@ -248,30 +221,6 @@ func set_collision_exceptions(physics_body: PhysicsBody) -> void:
 func _attach_body(physics_body: PhysicsBody) -> void:
 	var real_collision_layer := physics_body.collision_layer
 	var real_collision_mask := physics_body.collision_mask
-	
-#	# replace collision layer with entity in portal
-#	physics_body.collision_layer = Utils.bit_mask_unset(
-#		physics_body.collision_layer,
-#		Utils.CollisionLayers.PLAYER |
-#		Utils.CollisionLayers.DYNAMIC
-#	)
-#	physics_body.collision_layer = Utils.bit_mask_set(
-#		physics_body.collision_layer,
-#		Utils.CollisionLayers.ENTITY_IN_PORTAL
-#	)
-#
-#	# replace collision mask with an altered one while in portal
-#	physics_body.collision_mask = Utils.bit_mask_unset(
-#		physics_body.collision_mask,
-#		Utils.CollisionLayers.PLAYER |
-#		Utils.CollisionLayers.STATIC |
-#		Utils.CollisionLayers.DYNAMIC
-#	)
-#	physics_body.collision_mask = Utils.bit_mask_set(
-#		physics_body.collision_mask,
-#		Utils.CollisionLayers.PORTAL_STATIC |
-#		Utils.CollisionLayers.ENTITY_IN_PORTAL
-#	)
 
 	_clear_collision_exceptions(physics_body)
 	set_collision_exceptions(physics_body)
@@ -279,26 +228,21 @@ func _attach_body(physics_body: PhysicsBody) -> void:
 	var double: PhysicsBody
 	if physics_body is Player:
 		double = KinematicBody.new()
-#		var shape_owners := physics_body.get_shape_owners()
-#		for owner_id in shape_owners:
-#			var shape_count := physics_body.shape_owner_get_shape_count(owner_id)
-#			for shape_idx in range(shape_count):
-#				var double_collision_shape := CollisionShape.new()
-#				double_collision_shape.shape = physics_body.shape_owner_get_shape(owner_id, shape_idx)
 		
 		double.add_child(physics_body.get_node("BodyShape").duplicate())
 
 		var double_body: MeshInstance = physics_body.model.duplicate()
-		var body_parts := Utils.children_to_list_recursive(double_body)
+		var body_parts := Util.children_to_list(double_body)
+		body_parts.push_front(double_body)
 		for part in body_parts:
-			part.layers = Utils.bit_mask_unset(
+			part.layers = Util.bit_mask_unset(
 				part.layers,
-				Utils.VisualLayers.MAIN_CAMERA |
-				Utils.VisualLayers.PORTAL_CAMERA
+				Util.VisualLayers.MAIN_CAMERA |
+				Util.VisualLayers.PORTAL_CAMERA
 			)
-			part.layers = Utils.bit_mask_set(
+			part.layers = Util.bit_mask_set(
 				part.layers,
-				Utils.VisualLayers.PORTAL_CULL
+				Util.VisualLayers.PORTAL_CULL
 			)
 		double.add_child(double_body)
 	else:
@@ -351,38 +295,38 @@ func _on_body_exited(body):
 
 
 func _on_Exit_body_entered_back(body: PhysicsBody) -> void:
-	var mesh_instance := _find_mesh_instance(body)
-	for mesh_part in Utils.children_to_list_recursive(mesh_instance):
-		var visual := mesh_part as VisualInstance
-		visual.layers = Utils.bit_mask_unset(
+	for child in Util.children_to_list(body):
+		if not child is VisualInstance:
+			continue
+		var visual := child as VisualInstance
+		visual.layers = Util.bit_mask_unset(
 			visual.layers,
-			Utils.VisualLayers.MAIN_CAMERA
+			Util.VisualLayers.MAIN_CAMERA
 		)
-		visual.layers = Utils.bit_mask_set(
+		visual.layers = Util.bit_mask_set(
 			visual.layers,
-			Utils.VisualLayers.PORTAL_CULL
+			Util.VisualLayers.PORTAL_CULL
 		)
 
 
 func _on_Exit_body_exited_back(body: PhysicsBody) -> void:
-	var mesh_instance := _find_mesh_instance(body)
-	for mesh_part in Utils.children_to_list_recursive(mesh_instance):
-		var visual := mesh_part as VisualInstance
-		visual.layers = Utils.bit_mask_unset(
+	for child in Util.children_to_list(body):
+		if not child is VisualInstance:
+			continue
+		var visual := child as VisualInstance
+		visual.layers = Util.bit_mask_unset(
 			visual.layers,
-			Utils.VisualLayers.PORTAL_CULL
+			Util.VisualLayers.PORTAL_CULL
 		)
-		visual.layers = Utils.bit_mask_set(
+		visual.layers = Util.bit_mask_set(
 			visual.layers,
-			Utils.VisualLayers.MAIN_CAMERA
+			Util.VisualLayers.MAIN_CAMERA
 		)
 
 
 func _on_BackArea_body_entered(body: PhysicsBody) -> void:
-#	_apply_clip_plane(body)
 	emit_signal("body_entered_back", body)
 
 
 func _on_BackArea_body_exited(body: PhysicsBody) -> void:
-#	_remove_clip_plane(body)
 	emit_signal("body_exited_back", body)

@@ -1,6 +1,7 @@
 extends "res://addons/gut/test.gd"
 
-func test_child_to_list_recursive():
+
+func test_child_to_list():
 	var root := Node.new()
 	root.name = "root"
 	for i in range(5):
@@ -12,6 +13,6 @@ func test_child_to_list_recursive():
 			child.add_child(subchild)
 		root.add_child(child)
 	add_child(root)
-	var nodes = Utils.children_to_list_recursive(root)
+	var nodes = Util.children_to_list(root)
+	assert_eq(nodes.size(), 15, "Wrong number of child nodes.")
 	root.queue_free()
-	assert_eq(nodes.size(), 16, "Wrong number of child nodes.")

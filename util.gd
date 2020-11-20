@@ -1,4 +1,4 @@
-class_name Utils
+class_name Util
 extends Object
 
 enum CollisionLayers {
@@ -27,11 +27,12 @@ static func bit_mask_unset(bit_mask: int, bits_to_unset: int) -> int:
 	return bit_mask & ~bits_to_unset
 
 
-static func children_to_list_recursive(node: Node) -> Array:
-	var arr := []
-	for child in node.get_children():
-		arr = arr + children_to_list_recursive(child)
-	arr.push_front(node)
+static func children_to_list(node: Node) -> Array:
+	var arr := node.get_children()
+	var idx := 0
+	while idx < arr.size():
+		arr += arr[idx].get_children()
+		idx += 1
 	return arr
 
 

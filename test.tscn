@@ -50,7 +50,7 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1, -10.954 )
 portal_path = NodePath("../PortalA0")
 
 [node name="PortalA1" parent="." instance=ExtResource( 7 )]
-transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 9.9428, 1, -8 )
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 9.99012, 1, -8 )
 portal_path = NodePath("../PortalB1")
 
 [node name="PortalB1" parent="." instance=ExtResource( 7 )]
@@ -90,7 +90,7 @@ material/0 = SubResource( 5 )
 shape = SubResource( 6 )
 
 [node name="Box1" type="RigidBody" parent="Objects"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.149, 1, -9 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75618, 0.629897, -9.08999 )
 collision_layer = 4
 collision_mask = 6151
 __meta__ = {
@@ -105,7 +105,7 @@ material/0 = SubResource( 5 )
 shape = SubResource( 6 )
 
 [node name="Box2" type="RigidBody" parent="Objects"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.15309, 0.612521, -7.23816 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.15309, 0.612521, -7.32814 )
 collision_layer = 4
 collision_mask = 6151
 __meta__ = {
@@ -120,7 +120,7 @@ material/0 = SubResource( 5 )
 shape = SubResource( 6 )
 
 [node name="Box3" type="RigidBody" parent="Objects"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8282, 0.612521, -6.98026 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8282, 0.612521, -7.07024 )
 collision_layer = 4
 collision_mask = 6151
 __meta__ = {
@@ -135,7 +135,7 @@ material/0 = SubResource( 5 )
 shape = SubResource( 6 )
 
 [node name="Box4" type="RigidBody" parent="Objects"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17049, 1, -9.364 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17049, 1, -9.45399 )
 collision_layer = 4
 collision_mask = 6151
 __meta__ = {
@@ -150,7 +150,7 @@ material/0 = SubResource( 5 )
 shape = SubResource( 6 )
 
 [node name="Box5" type="RigidBody" parent="Objects"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.93307, 1.61252, -7.33186 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 7.93307, 1.61252, -7.42184 )
 collision_layer = 4
 collision_mask = 6151
 __meta__ = {
@@ -333,4 +333,20 @@ mesh = SubResource( 7 )
 material/0 = ExtResource( 6 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Geometry/Floor3"]
+shape = SubResource( 8 )
+
+[node name="Floor4" type="StaticBody" parent="Geometry"]
+transform = Transform( -3.49691e-07, 1.76883e-14, -8, -2.64918e-08, 1, 1.42665e-13, 8, 3.31147e-09, -3.49691e-07, 8, -0.5, -15 )
+collision_layer = 1026
+collision_mask = 5
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="MeshInstance" type="MeshInstance" parent="Geometry/Floor4"]
+transform = Transform( 1, 0, -1.47648e-09, 0, 1, -1.42937e-20, 1.47648e-09, 3.93738e-22, 1, 0, 0, 0 )
+mesh = SubResource( 7 )
+material/0 = ExtResource( 2 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Geometry/Floor4"]
 shape = SubResource( 8 )

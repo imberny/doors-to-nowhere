@@ -17,11 +17,11 @@ func get_portal_cull() -> int:
 #	_next_free_portal_cull = (_next_free_portal_cull + 1) % 4
 	match free_cull:
 		0:
-			return Utils.VisualLayers.PORTAL_CULL_0
+			return Util.VisualLayers.PORTAL_CULL_0
 		1:
-			return Utils.VisualLayers.PORTAL_CULL_1
+			return Util.VisualLayers.PORTAL_CULL_1
 		2:
-			return Utils.VisualLayers.PORTAL_CULL_2
+			return Util.VisualLayers.PORTAL_CULL_2
 		3:
-			return Utils.VisualLayers.PORTAL_CULL_3
+			return Util.VisualLayers.PORTAL_CULL_3
 	return -1

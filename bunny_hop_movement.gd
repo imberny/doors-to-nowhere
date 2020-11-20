@@ -23,16 +23,16 @@ static func move(
 		new_velocity = _accelerate(
 			input_dir,
 			prev_velocity,
-			Globals.player.ground_acceleration * sprint_modifier,
-			Globals.player.ground_max_velocity * sprint_modifier,
+			Global.player.ground_acceleration * sprint_modifier,
+			Global.player.ground_max_velocity * sprint_modifier,
 			delta
 		)
 	else:
 		new_velocity = _accelerate(
 			input_dir,
 			prev_velocity,
-			Globals.player.air_acceleration,
-			Globals.player.air_max_velocity,
+			Global.player.air_acceleration,
+			Global.player.air_max_velocity,
 			delta
 		)
 	
