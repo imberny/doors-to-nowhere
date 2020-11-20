@@ -33,10 +33,18 @@ class BodyInfo:
 func _ready() -> void:
 	if portal_path:
 		self.exit_portal = get_node(portal_path)
-	_cull_layer = Globals.get_portal_cull()
+#	_cull_layer = Globals.get_portal_cull()
 	_camera.cull_mask = Utils.bit_mask_unset(
 		_camera.cull_mask,
-		_cull_layer
+		Utils.VisualLayers.PORTAL_CULL
+	)
+	_surface.layers = Utils.bit_mask_unset(
+		_surface.layers,
+		Utils.VisualLayers.MAIN_CAMERA
+	)
+	_surface.layers = Utils.bit_mask_set(
+		_surface.layers,
+		Utils.VisualLayers.PORTAL_CULL
 	)
 	
 	var plane_normal = global_transform.basis.z.normalized()
@@ -352,7 +360,7 @@ func _on_Exit_body_entered_back(body: PhysicsBody) -> void:
 		)
 		visual.layers = Utils.bit_mask_set(
 			visual.layers,
-			_cull_layer
+			Utils.VisualLayers.PORTAL_CULL
 		)
 
 
@@ -362,7 +370,7 @@ func _on_Exit_body_exited_back(body: PhysicsBody) -> void:
 		var visual := mesh_part as VisualInstance
 		visual.layers = Utils.bit_mask_unset(
 			visual.layers,
-			_cull_layer
+			Utils.VisualLayers.PORTAL_CULL
 		)
 		visual.layers = Utils.bit_mask_set(
 			visual.layers,

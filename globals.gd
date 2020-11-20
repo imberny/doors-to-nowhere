@@ -14,10 +14,14 @@ var _next_free_portal_cull = 0
 
 func get_portal_cull() -> int:
 	var free_cull = _next_free_portal_cull
-	_next_free_portal_cull += 1
+#	_next_free_portal_cull = (_next_free_portal_cull + 1) % 4
 	match free_cull:
 		0:
 			return Utils.VisualLayers.PORTAL_CULL_0
 		1:
 			return Utils.VisualLayers.PORTAL_CULL_1
+		2:
+			return Utils.VisualLayers.PORTAL_CULL_2
+		3:
+			return Utils.VisualLayers.PORTAL_CULL_3
 	return -1
