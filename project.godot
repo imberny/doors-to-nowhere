@@ -58,6 +58,10 @@ window/size/width=1920
 window/size/height=1080
 window/size/fullscreen=true
 
+[editor_plugins]
+
+enabled=PoolStringArray( "gut" )
+
 [input]
 
 forward={
@@ -119,7 +123,9 @@ pause={
 
 [layer_names]
 
+3d_render/layer_1="main_camera"
 3d_physics/layer_1="player"
+3d_render/layer_2="portal_camera"
 3d_physics/layer_2="static"
 3d_physics/layer_3="dynamic"
 3d_physics/layer_11="portalable"

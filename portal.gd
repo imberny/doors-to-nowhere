@@ -5,13 +5,22 @@ export(NodePath) var portal_path
 export(float) var shader_scale = 0.766
 
 var exit_portal: Portal setget _set_exit_portal
-var _player: Player
 onready var _viewport := $Viewport
 onready var _camera := $Viewport/Camera
 onready var _surface := $Surface
 onready var _exit_point := $ExitPoint
-onready var _bodies_in_portal := {}
-onready var _body_doubles := {}
+onready var _body_info := {}
+onready var _bodies_in_teleport := {} # temp map for bodies being teleported
+
+class BodyInfo:
+	var double: PhysicsBody
+	var collision_layer: int
+	var collision_mask: int
+	
+	func _init(double: PhysicsBody, layer: int, mask: int) -> void:
+		self.double = double
+		self.collision_layer = layer
+		self.collision_mask = mask
 
 
 func _ready() -> void:
@@ -79,24 +88,29 @@ func teleport_global_xform(xform: Transform) -> Transform:
 
 
 func teleport_player(player: Player) -> void:
-	var player_xform = _player.global_transform
-	_player.global_transform = teleport_global_xform(player_xform)
+	var player_xform = player.global_transform
+	player.global_transform = teleport_global_xform(player_xform)
 	
-#	var move_direction = _player.velocity.normalized()
-#	move_direction = -teleport_global_origin(move_direction).normalized()
-#	var exit_up = self.exit_portal.global_transform.basis.y
-#	_player.velocity = move_direction * _player.velocity.length()
-	var backward := -global_transform.basis.z.normalized()
+	var player_dir := player.velocity.normalized()
 	var right := global_transform.basis.x.normalized()
+	# which way to rotate
 	var angle_sign := 1.0
-	var player_dir := _player.velocity.normalized()
 	if 0 < player_dir.dot(right):
 		angle_sign = -1.0
+
+	var backward := -global_transform.basis.z.normalized()
 	var velocity_angle = angle_sign * acos(player_dir.dot(backward))
+
 	var exit_forward = self.exit_portal.global_transform.basis.z.normalized()
 	var exit_up = self.exit_portal.global_transform.basis.y.normalized()
-	_player.velocity = exit_forward.rotated(exit_up, velocity_angle) * _player.velocity.length()
-	_detach_player()
+	player.velocity = exit_forward.rotated(exit_up, velocity_angle) * player.velocity.length()
+
+
+func receive_body(body: PhysicsBody, info: BodyInfo) -> void:
+	if _body_info.has(body):
+		return
+	
+	_body_info[body] = info
 
 
 func _will_player_cross_next_frame(player: Player, delta: float) -> bool:
@@ -133,95 +147,145 @@ func _process(_delta) -> void:
 
 
 func _physics_process(delta) -> void:
-	if _player:
-		var cam = get_viewport().get_camera()
-		var cam_pos = cam.global_transform.origin
-		# predict next frame pos
-		var cam_next_pos = cam_pos + _player.velocity * delta
-		var cam_next_dir = (cam_next_pos - global_transform.origin).normalized()
-		if _will_player_cross_next_frame(_player, delta):
-			teleport_player(_player)
-	for body_id in _bodies_in_portal:
-		var rbody := _bodies_in_portal[body_id] as RigidBody
-		# update double
-		var double = _body_doubles[body_id] as RigidBody
-		if 0 < rbody.linear_velocity.length():
-			var velocity_angle = acos(rbody.linear_velocity.normalized().dot(-global_transform.basis.z))
-			var exit_forward = exit_portal.global_transform.basis.z.normalized()
-			var exit_up = exit_portal.global_transform.basis.y.normalized()
-			double.linear_velocity = exit_forward.rotated(exit_up, velocity_angle) * rbody.linear_velocity.length()
-		elif 0 < double.linear_velocity.length():
-			var velocity_angle = acos(double.linear_velocity.normalized().dot(-exit_portal.global_transform.basis.z))
-			var entry_forward = global_transform.basis.z.normalized()
-			var entry_up = global_transform.basis.y.normalized()
-			rbody.linear_velocity = entry_forward.rotated(entry_up, velocity_angle) * double.linear_velocity.length()
-		
-		var body_next_pos = rbody.global_transform.origin + rbody.linear_velocity * delta
-		var body_next_dir = (body_next_pos - global_transform.origin).normalized()
-		if 0 > body_next_dir.dot(global_transform.basis.z):
-			var exit_pos = _get_exit_position(rbody.transform.origin)
-			var exit_quat = _get_exit_quaternion(self, exit_portal, rbody.global_transform.basis)
-			rbody.global_transform.origin = exit_pos
-			rbody.global_transform.basis = Basis(exit_quat)
-			rbody.rotate(rbody.global_transform.basis.y, PI)
-			var velocity_angle = acos(rbody.linear_velocity.normalized().dot(-global_transform.basis.z))
-			var exit_forward = exit_portal.global_transform.basis.z.normalized()
-			var exit_up = exit_portal.global_transform.basis.y.normalized()
-			rbody.linear_velocity = exit_forward.rotated(exit_up, velocity_angle) * rbody.linear_velocity.length()
+	var bodies_to_remove := []
+	for body in _body_info.keys():
+		if body is Player:
+			var info := _body_info[body] as BodyInfo
+			var double := info.double as KinematicBody
+			double.global_transform = teleport_global_xform(body.global_transform)
+
+			if _will_player_cross_next_frame(body, delta):
+				teleport_player(body)
+				double.global_transform = self.exit_portal.teleport_global_xform(double.global_transform)
+				bodies_to_remove.push_back(body)
+#				_bodies_in_teleport[body] = body
+		elif body is RigidBody:
+			var rigid_body := body as RigidBody
+			var info := _body_info[rigid_body] as BodyInfo
+			var double := info.double as RigidBody
+			double.global_transform = teleport_global_xform(rigid_body.global_transform)
+#			if 0 < physics_body.linear_velocity.length():
+#				var velocity_angle = acos(rbody.linear_velocity.normalized().dot(-global_transform.basis.z))
+#				var exit_forward = exit_portal.global_transform.basis.z.normalized()
+#				var exit_up = exit_portal.global_transform.basis.y.normalized()
+#				double.linear_velocity = exit_forward.rotated(exit_up, velocity_angle) * rbody.linear_velocity.length()
+#			elif 0 < double.linear_velocity.length():
+#				var velocity_angle = acos(double.linear_velocity.normalized().dot(-exit_portal.global_transform.basis.z))
+#				var entry_forward = global_transform.basis.z.normalized()
+#				var entry_up = global_transform.basis.y.normalized()
+#				rbody.linear_velocity = entry_forward.rotated(entry_up, velocity_angle) * double.linear_velocity.length()
+			
+			var body_next_pos = rigid_body.global_transform.origin + rigid_body.linear_velocity * delta
+			var body_next_dir = (body_next_pos - global_transform.origin).normalized()
+			if 0 > body_next_dir.dot(global_transform.basis.z):
+				rigid_body.global_transform = teleport_global_xform(rigid_body.global_transform)
+				var forward := -global_transform.basis.z.normalized()
+				var move_dir := rigid_body.linear_velocity.normalized()
+				var velocity_angle = acos(move_dir.dot(forward))
+				var exit_forward = exit_portal.global_transform.basis.z.normalized()
+				var exit_up = exit_portal.global_transform.basis.y.normalized()
+				rigid_body.linear_velocity = exit_forward.rotated(exit_up, velocity_angle) * rigid_body.linear_velocity.length()
+				bodies_to_remove.push_back(rigid_body)
+#				_bodies_in_teleport[rigid_body] = rigid_body
+	for body in bodies_to_remove:
+		self.exit_portal.receive_body(body, _body_info[body])
+		_body_info.erase(body)
+#		_detach_body(body)
 
 
 func _set_exit_portal(value: Portal) -> void:
 	exit_portal = value
 
 
-func _attach_player(player: Player) -> void:
-	_player = player
-	_player.collision_layer ^= 1
-	_player.collision_mask ^= 1 << 1
-	_player.collision_mask ^= 1 << 2
+func _attach_body(physics_body: PhysicsBody) -> void:
+	var real_collision_layer := physics_body.collision_layer
+	var real_collision_mask := physics_body.collision_mask
+	
+	# replace collision layer with entity in portal
+	physics_body.collision_layer = Utils.bit_mask_unset(
+		physics_body.collision_layer,
+		Utils.CollisionLayers.PLAYER |
+		Utils.CollisionLayers.DYNAMIC
+	)
+	physics_body.collision_layer = Utils.bit_mask_set(
+		physics_body.collision_layer,
+		Utils.CollisionLayers.ENTITY_IN_PORTAL
+	)
+
+	# replace collision mask with an altered one while in portal
+	physics_body.collision_mask = Utils.bit_mask_unset(
+		physics_body.collision_mask,
+		Utils.CollisionLayers.PLAYER |
+		Utils.CollisionLayers.STATIC |
+		Utils.CollisionLayers.DYNAMIC
+	)
+	physics_body.collision_mask = Utils.bit_mask_set(
+		physics_body.collision_mask,
+		Utils.CollisionLayers.PORTAL_STATIC |
+		Utils.CollisionLayers.ENTITY_IN_PORTAL
+	)
+
+	var double: PhysicsBody
+	if physics_body is Player:
+		double = KinematicBody.new()
+		var double_body: MeshInstance = physics_body.model.duplicate()
+		var body_parts := Utils.children_to_list_recursive(double_body)
+		for part in body_parts:
+			part.layers = Utils.bit_mask_unset(
+				part.layers,
+				Utils.VisualLayers.MAIN_CAMERA |
+				Utils.VisualLayers.PORTAL_CAMERA
+			)
+			part.layers = Utils.bit_mask_set(
+				part.layers,
+				Utils.VisualLayers.PORTAL_CULL
+			)
+		double.add_child(double_body)
+	else:
+		double = physics_body.duplicate()
+	double.add_to_group("doubles")
+	add_child(double)
+	double.global_transform = teleport_global_xform(physics_body.global_transform)
+	var info := BodyInfo.new(
+		double,
+		real_collision_layer,
+		real_collision_mask
+	)
+	_body_info[physics_body] = info
+
+
+func _detach_body(physics_body: PhysicsBody) -> void:
+	if not _body_info.has(physics_body):
+		return
+
+	var info: BodyInfo = _body_info[physics_body]
+	var double = info.double
+	remove_child(double)
+	var _err = _body_info.erase(physics_body)
+	double.queue_free()
+	
+	physics_body.collision_layer = info.collision_layer
+	physics_body.collision_mask = info.collision_mask
 
 
 func _on_body_entered(body):
-	if body is Player:
-		_attach_player(body)
-	if body is RigidBody and not body.is_in_group("doubles"):
-		_bodies_in_portal[body.get_rid()] = body
-		var double: RigidBody = body.duplicate()
-		double.add_to_group("doubles")
-		_body_doubles[body.get_rid()] = double
-		add_child(double)
-		double.transform.origin = _get_exit_position(body.transform.origin)
-#		var double_quat := _get_exit_quaternion(self, exit_portal, Quat(body.global_transform.basis))
-#		double.global_transform.basis = Basis(double_quat)
-		(body as PhysicsBody).collision_layer ^= 2
-		(body as PhysicsBody).collision_mask ^= 1
-		(body as PhysicsBody).collision_mask ^= 1 << 1
-		(body as PhysicsBody).collision_mask ^= 1 << 2
-	
-	(body as PhysicsBody).collision_layer ^= 1 << 12
-
-
-func _detach_player() -> void:
-	if not _player:
+	var physics_body := body as PhysicsBody
+	if not physics_body or body.is_in_group("doubles"):
 		return
-	_player.collision_layer ^= 1
-	_player.collision_mask ^= 1 << 1
-	_player.collision_mask ^= 1 << 2
-	_player = null
+	
+	if _body_info.has(body):
+		return
+	
+	_attach_body(physics_body)
 
 
 func _on_body_exited(body):
-	if body is Player:
-		_detach_player()
-	if body is RigidBody and not body.is_in_group("doubles"):
-		var double = _body_doubles[body.get_rid()]
-		remove_child(double)
-		var _err = _bodies_in_portal.erase(body.get_rid())
-		_err = _body_doubles.erase(body.get_rid())
-		double.queue_free()
-		(body as PhysicsBody).collision_layer ^= 2
-		(body as PhysicsBody).collision_mask ^= 1
-		(body as PhysicsBody).collision_mask ^= 1 << 1
-		(body as PhysicsBody).collision_mask ^= 1 << 2
+	var physics_body := body as PhysicsBody
+	if not physics_body or body.is_in_group("doubles"):
+		return
 
-	(body as PhysicsBody).collision_layer ^= 1 << 12
+	if _bodies_in_teleport.has(body):
+		_bodies_in_teleport.erase(body)
+		return
+
+	_detach_body(physics_body)

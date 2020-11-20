@@ -22,7 +22,7 @@ shader_param/portal_plane_dist = null
 shader_param/camera_texture = SubResource( 8 )
 
 [sub_resource type="BoxShape" id=10]
-extents = Vector3( 1, 0.2, 0.3 )
+extents = Vector3( 1, 0.2, 1 )
 
 [node name="Portal" type="Area"]
 collision_layer = 0
@@ -55,7 +55,7 @@ material/0 = SubResource( 9 )
 
 [node name="Boundary" type="StaticBody" parent="."]
 collision_layer = 2048
-collision_mask = 5
+collision_mask = 4096
 
 [node name="Bottom" type="CollisionShape" parent="Boundary"]
 transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, -1.2, 0 )
@@ -68,12 +68,10 @@ shape = SubResource( 10 )
 [node name="Left" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, -1.2, 0, 0 )
 shape = SubResource( 10 )
-disabled = true
 
 [node name="Right" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, 1.2, 0, 0 )
 shape = SubResource( 10 )
-disabled = true
 
 [node name="ExitPoint" type="Spatial" parent="."]
 transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0, 0 )

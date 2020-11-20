@@ -17,6 +17,8 @@ var gravity := 49.0
 var sprint_modifier := 1.6
 var crouch_modifier := 0.3
 
+var model: MeshInstance setget , _get_model
+
 
 
 func _ready() -> void:
@@ -67,7 +69,14 @@ func _physics_process(delta: float) -> void:
 	)
 	velocity += gravity * Vector3.DOWN * delta
 	
-	velocity = move_and_slide(velocity, Vector3.UP)
+	velocity = move_and_slide(
+		velocity,
+		Vector3.UP,
+		false, # stops on slope, default false
+		4, # max slides, default 4
+		0.785398, # max floor angle, default: 0.785398
+		false # infinite inertia, default true
+	)
 
 
 func _set_is_main_view(value: bool) -> void:
@@ -75,3 +84,5 @@ func _set_is_main_view(value: bool) -> void:
 #	$Body/LeftEye.visible = not value
 #	$Body/RightEye.visible = not value
 
+func _get_model():
+	return $Body
