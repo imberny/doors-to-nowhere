@@ -16,7 +16,7 @@ viewport_path = NodePath("Viewport")
 resource_local_to_scene = true
 shader = ExtResource( 2 )
 shader_param/distance_factor = 1.0
-shader_param/zoom = 2.045
+shader_param/scale = 0.766
 shader_param/portal_plane = null
 shader_param/portal_plane_dist = null
 shader_param/camera_texture = SubResource( 8 )
@@ -31,7 +31,6 @@ script = ExtResource( 1 )
 __meta__ = {
 "_edit_group_": true
 }
-zoom = 1.305
 
 [node name="CollisionShape" type="CollisionShape" parent="."]
 transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, -9.12812e-09, 0.0560279 )
@@ -42,6 +41,8 @@ size = Vector2( 1920, 1080 )
 msaa = 1
 hdr = false
 keep_3d_linear = true
+render_target_clear_mode = 2
+render_target_update_mode = 3
 shadow_atlas_size = 2
 
 [node name="Camera" type="Camera" parent="Viewport"]
@@ -54,7 +55,7 @@ material/0 = SubResource( 9 )
 
 [node name="Boundary" type="StaticBody" parent="."]
 collision_layer = 2048
-collision_mask = 4096
+collision_mask = 5
 
 [node name="Bottom" type="CollisionShape" parent="Boundary"]
 transform = Transform( 1, 0, -7.45058e-08, 0, 1, 0, 7.45058e-08, 0, 1, 0, -1.2, 0 )
@@ -67,10 +68,12 @@ shape = SubResource( 10 )
 [node name="Left" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, -1.2, 0, 0 )
 shape = SubResource( 10 )
+disabled = true
 
 [node name="Right" type="CollisionShape" parent="Boundary"]
 transform = Transform( -1.62921e-07, -1, 0, 1, -1.62921e-07, 0, 0, 0, 1, 1.2, 0, 0 )
 shape = SubResource( 10 )
+disabled = true
 
 [node name="ExitPoint" type="Spatial" parent="."]
 transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0, 0 )

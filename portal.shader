@@ -3,7 +3,7 @@ render_mode unshaded;
 
 uniform sampler2D camera_texture;
 uniform float distance_factor;
-uniform float zoom = 2f;
+uniform float scale = 0.766f;
 uniform vec3 portal_plane;
 uniform float portal_plane_dist;
 
@@ -20,10 +20,6 @@ void fragment() {
 	if (portal_culls(VERTEX, CAMERA_MATRIX)) {
 		discard;
 	} else {
-//		float dist = distance_factor;//1f;
-//		float aspect = VIEWPORT_SIZE.y / VIEWPORT_SIZE.x;
-		//	ALBEDO = texture(camera_texture, vec2(SCREEN_UV.x * aspect + SCREEN_UV.x * aspect/2f, SCREEN_UV.y)).xyz;
-		float scale_factor = 1f / zoom;
-		ALBEDO = texture(camera_texture, SCREEN_UV * scale_factor + vec2((1f - scale_factor)  / 2f)).xyz;
+		ALBEDO = texture(camera_texture, SCREEN_UV * scale + vec2((1f - scale) / 2f)).xyz;
 	}
 }

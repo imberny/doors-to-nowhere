@@ -2,7 +2,7 @@ class_name Portal
 extends Area
 
 export(NodePath) var portal_path
-export(float) var zoom = 1.0
+export(float) var shader_scale = 0.766
 
 var exit_portal: Portal setget _set_exit_portal
 var _player: Player
@@ -20,9 +20,10 @@ func _ready() -> void:
 	var plane_normal = global_transform.basis.z.normalized()
 	var plane_dist = global_transform.origin.project(plane_normal).length()
 	var portal_plane = Plane(plane_normal, plane_dist)
-	var portal_material: ShaderMaterial = _surface.get_surface_material(0)
-	portal_material.set_shader_param("portal_plane", -plane_normal)
-	portal_material.set_shader_param("portal_plane_dist", portal_plane.d)
+	var portal_shader: ShaderMaterial = _surface.get_surface_material(0)
+	portal_shader.set_shader_param("portal_plane", -plane_normal)
+	portal_shader.set_shader_param("portal_plane_dist", portal_plane.d)
+	portal_shader.set_shader_param("scale", shader_scale)
 
 
 func _get_exit_position(position: Vector3) -> Vector3:
@@ -77,6 +78,45 @@ func teleport_global_xform(xform: Transform) -> Transform:
 	return Transform(exit_quat, exit_origin)
 
 
+func teleport_player(player: Player) -> void:
+	var player_xform = _player.global_transform
+	_player.global_transform = teleport_global_xform(player_xform)
+	
+#	var move_direction = _player.velocity.normalized()
+#	move_direction = -teleport_global_origin(move_direction).normalized()
+#	var exit_up = self.exit_portal.global_transform.basis.y
+#	_player.velocity = move_direction * _player.velocity.length()
+	var backward := -global_transform.basis.z.normalized()
+	var right := global_transform.basis.x.normalized()
+	var angle_sign := 1.0
+	var player_dir := _player.velocity.normalized()
+	if 0 < player_dir.dot(right):
+		angle_sign = -1.0
+	var velocity_angle = angle_sign * acos(player_dir.dot(backward))
+	var exit_forward = self.exit_portal.global_transform.basis.z.normalized()
+	var exit_up = self.exit_portal.global_transform.basis.y.normalized()
+	_player.velocity = exit_forward.rotated(exit_up, velocity_angle) * _player.velocity.length()
+	_detach_player()
+
+
+func _will_player_cross_next_frame(player: Player, delta: float) -> bool:
+	var main_cam := get_viewport().get_camera()
+	var cam_pos := main_cam.global_transform.origin 
+	var cam_forward := -main_cam.global_transform.basis.z
+	# predict next cam position based on player velocity
+	var cam_next_pos := cam_pos + player.velocity * delta
+	
+	# normal pointing to front of portal
+	var forward := global_transform.basis.z.normalized()
+
+	var portal_pos := global_transform.origin
+	# compute normal pointing from portal to next cam position
+	var cam_next_direction := (cam_next_pos - portal_pos).normalized()
+
+	# check for angle greater than 90
+	return 0 > cam_next_direction.dot(forward)
+
+
 func _process(_delta) -> void:
 	var main_cam := get_viewport().get_camera()
 	var main_cam_origin = main_cam.global_transform.origin 
@@ -90,7 +130,6 @@ func _process(_delta) -> void:
 	_camera.global_transform = teleport_global_xform(main_cam.global_transform)
 	
 	_camera.near = max(cam_distance - 3.0, 0.01)
-	_surface.get_surface_material(0).set_shader_param("zoom", zoom)
 
 
 func _physics_process(delta) -> void:
@@ -100,17 +139,8 @@ func _physics_process(delta) -> void:
 		# predict next frame pos
 		var cam_next_pos = cam_pos + _player.velocity * delta
 		var cam_next_dir = (cam_next_pos - global_transform.origin).normalized()
-		if 0 > cam_next_dir.dot(transform.basis.z):
-			var exit_pos = _get_exit_position(_player.transform.origin)
-			var exit_quat = _get_exit_quaternion(self, exit_portal, _player.global_transform.basis)
-			_player.transform.origin = exit_pos
-			_player.global_transform.basis = Basis(exit_quat)
-			_player.rotate(_player.global_transform.basis.y, PI)
-			var velocity_angle = acos(_player.velocity.normalized().dot(-global_transform.basis.z))
-			var exit_forward = exit_portal.global_transform.basis.z.normalized()
-			var exit_up = exit_portal.global_transform.basis.y.normalized()
-			_player.velocity = exit_forward.rotated(exit_up, velocity_angle) * _player.velocity.length()
-			_detach_player()
+		if _will_player_cross_next_frame(_player, delta):
+			teleport_player(_player)
 	for body_id in _bodies_in_portal:
 		var rbody := _bodies_in_portal[body_id] as RigidBody
 		# update double
