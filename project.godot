@@ -127,10 +127,15 @@ pause={
 3d_physics/layer_1="player"
 3d_render/layer_2="portal_camera"
 3d_physics/layer_2="static"
+3d_render/layer_3="portal_cull"
 3d_physics/layer_3="dynamic"
+3d_render/layer_11="portal_cull_0"
 3d_physics/layer_11="portalable"
+3d_render/layer_12="portal_cull_1"
 3d_physics/layer_12="portal_static"
+3d_render/layer_13="portal_cull_2"
 3d_physics/layer_13="entity_in_portal"
+3d_render/layer_14="portal_cull_3"
 
 [rendering]
 

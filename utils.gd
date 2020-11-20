@@ -12,7 +12,11 @@ enum CollisionLayers {
 enum VisualLayers {
 	MAIN_CAMERA = 1 << 0, # visible from main camera
 	PORTAL_CAMERA = 1 << 1, # visible through portal cameras
-	PORTAL_CULL = 1 << 2 # not visible through portal cameras
+	PORTAL_CULL = 1 << 2, # not visible through portal cameras
+	PORTAL_CULL_0 = 1 << 10,
+	PORTAL_CULL_1 = 1 << 11,
+	PORTAL_CULL_2 = 1 << 12,
+	PORTAL_CULL_3 = 1 << 13
 }
 
 static func bit_mask_set(bit_mask: int, bits_to_set: int) -> int:
@@ -29,4 +33,6 @@ static func children_to_list_recursive(node: Node) -> Array:
 		arr = arr + children_to_list_recursive(child)
 	arr.push_front(node)
 	return arr
+
+
 

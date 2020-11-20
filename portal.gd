@@ -1,15 +1,23 @@
 class_name Portal
 extends Area
 
+signal body_entered_back(body)
+signal body_exited_back(body)
+
+
 export(NodePath) var portal_path
 export(float) var shader_scale = 0.766
+export(ShaderMaterial) var clip_shader
 
 var exit_portal: Portal setget _set_exit_portal
 onready var _viewport := $Viewport
 onready var _camera := $Viewport/Camera
 onready var _surface := $Surface
 onready var _exit_point := $ExitPoint
+onready var _zone_behind := $BackArea/CollisionShape
 onready var _body_info := {}
+
+var _cull_layer: int
 
 class BodyInfo:
 	var double: PhysicsBody
@@ -25,37 +33,20 @@ class BodyInfo:
 func _ready() -> void:
 	if portal_path:
 		self.exit_portal = get_node(portal_path)
+	_cull_layer = Globals.get_portal_cull()
+	_camera.cull_mask = Utils.bit_mask_unset(
+		_camera.cull_mask,
+		_cull_layer
+	)
+	
 	var plane_normal = global_transform.basis.z.normalized()
 #	var plane_dist = global_transform.origin.project(plane_normal).length()
 	var plane_dist = global_transform.origin.dot(plane_normal)
 	var portal_plane = Plane(plane_normal, plane_dist)
 	var portal_shader: ShaderMaterial = _surface.get_surface_material(0)
-	portal_shader.set_shader_param("portal_plane", -plane_normal)
-	portal_shader.set_shader_param("portal_plane_dist", portal_plane.d)
+	clip_shader.set_shader_param("portal_plane", -plane_normal)
+	clip_shader.set_shader_param("portal_plane_dist", portal_plane.d)
 	portal_shader.set_shader_param("scale", shader_scale)
-
-
-func _get_exit_position(position: Vector3) -> Vector3:
-	var entry_to_exit = exit_portal.transform * transform.affine_inverse()
-	var exit_pos = entry_to_exit * position
-	var exit_delta_pos = exit_portal.transform.origin - exit_pos
-	exit_pos += exit_delta_pos + exit_delta_pos.bounce(exit_portal.transform.basis.y.normalized())
-	return exit_pos
-
-
-func _get_exit_quaternion(entry: Portal, exit: Portal, quat: Quat) -> Quat:
-	var world_to_entry := Quat(entry.global_transform.basis.orthonormalized()).inverse()
-	var exit_to_world := Quat(exit.global_transform.basis.orthonormalized())
-	var entry_to_exit := world_to_entry * exit_to_world
-	return entry_to_exit * quat
-
-
-func teleport_rotation(local_rotation: Quat) -> Quat:
-	return Quat(_exit_point.global_transform.basis) * local_rotation
-
-
-func teleport_local_xform(xform: Transform) -> Transform:
-	return _exit_point.global_transform * xform
 
 
 func teleport_quat(quat: Quat) -> Quat:
@@ -65,16 +56,6 @@ func teleport_quat(quat: Quat) -> Quat:
 
 func teleport_origin(origin: Vector3) -> Vector3:
 	return _exit_point.to_global(origin)
-
-
-func teleport_global_quat(quat: Quat) -> Quat:
-	var local_quat := (Quat(global_transform.basis).inverse() * quat).normalized()
-	return self.exit_portal.teleport_quat(local_quat)
-
-
-func teleport_global_origin(origin: Vector3) -> Vector3:
-	var local_origin := to_local(origin)
-	return self.exit_portal.teleport_origin(local_origin)
 
 
 func teleport_global_xform(xform: Transform) -> Transform:
@@ -192,7 +173,48 @@ func _physics_process(delta) -> void:
 
 
 func _set_exit_portal(value: Portal) -> void:
+	var _err
+	if exit_portal:
+		_err = exit_portal.disconnect("body_entered_back", self, "_on_Exit_body_entered_back")
+		_err = exit_portal.disconnect("body_exited_back", self, "_on_Exit_body_exited_back")
+
 	exit_portal = value
+
+	_err = exit_portal.connect("body_entered_back", self, "_on_Exit_body_entered_back")
+	_err = exit_portal.connect("body_exited_back", self, "_on_Exit_body_exited_back")
+
+
+func _intersect_behind() -> Array:
+	var space_state := get_world().direct_space_state
+	var query_shape := PhysicsShapeQueryParameters.new()
+	query_shape.set_shape(_zone_behind.shape)
+	query_shape.transform = _zone_behind.global_transform
+	return space_state.intersect_shape(query_shape)
+
+
+func _find_mesh_instance(body: PhysicsBody) -> MeshInstance:
+	for child in body.get_children():
+		if child is MeshInstance:
+			return child
+	return null
+
+
+func _apply_clip_plane(body: PhysicsBody) -> void:
+#	for intersection in _intersect_behind():
+#		var collider = intersection.collider
+	var mesh_instance := _find_mesh_instance(body)
+	if mesh_instance:
+#		var material_count := mesh_instance.get_surface_material_count()
+		mesh_instance.set_surface_material(0, clip_shader)
+
+
+func _remove_clip_plane(body: PhysicsBody) -> void:
+#	for intersection in _intersect_behind():
+#		var collider = intersection.collider
+	var mesh_instance := _find_mesh_instance(body)
+	if mesh_instance:
+#		var material_count := mesh_instance.get_surface_material_count()
+		mesh_instance.set_surface_material(0, null)
 
 
 func _clear_collision_exceptions(physics_body : PhysicsBody) -> void:
@@ -203,8 +225,8 @@ func _clear_collision_exceptions(physics_body : PhysicsBody) -> void:
 func set_collision_exceptions(physics_body: PhysicsBody) -> void:
 	var space_state := get_world().direct_space_state
 	var query_shape := PhysicsShapeQueryParameters.new()
-	query_shape.set_shape($BackArea/CollisionShape.shape)
-	query_shape.transform = $BackArea.global_transform
+	query_shape.set_shape(_zone_behind.shape)
+	query_shape.transform = _zone_behind.global_transform
 	var query_results := space_state.intersect_shape(query_shape)
 	for intersection in query_results:
 		var collider = intersection.collider
@@ -317,3 +339,42 @@ func _on_body_exited(body):
 		return
 
 	_detach_body(physics_body)
+
+
+
+func _on_Exit_body_entered_back(body: PhysicsBody) -> void:
+	var mesh_instance := _find_mesh_instance(body)
+	for mesh_part in Utils.children_to_list_recursive(mesh_instance):
+		var visual := mesh_part as VisualInstance
+		visual.layers = Utils.bit_mask_unset(
+			visual.layers,
+			Utils.VisualLayers.MAIN_CAMERA
+		)
+		visual.layers = Utils.bit_mask_set(
+			visual.layers,
+			_cull_layer
+		)
+
+
+func _on_Exit_body_exited_back(body: PhysicsBody) -> void:
+	var mesh_instance := _find_mesh_instance(body)
+	for mesh_part in Utils.children_to_list_recursive(mesh_instance):
+		var visual := mesh_part as VisualInstance
+		visual.layers = Utils.bit_mask_unset(
+			visual.layers,
+			_cull_layer
+		)
+		visual.layers = Utils.bit_mask_set(
+			visual.layers,
+			Utils.VisualLayers.MAIN_CAMERA
+		)
+
+
+func _on_BackArea_body_entered(body: PhysicsBody) -> void:
+#	_apply_clip_plane(body)
+	emit_signal("body_entered_back", body)
+
+
+func _on_BackArea_body_exited(body: PhysicsBody) -> void:
+#	_remove_clip_plane(body)
+	emit_signal("body_exited_back", body)
