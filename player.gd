@@ -75,7 +75,7 @@ func _physics_process(delta: float) -> void:
 		false, # stops on slope, default false
 		4, # max slides, default 4
 		0.785398, # max floor angle, default: 0.785398
-		false # infinite inertia, default true
+		true # infinite inertia, default true
 	)
 
 

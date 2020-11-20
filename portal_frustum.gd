@@ -12,16 +12,21 @@ onready var _surface := $Surface
 onready var _exit_point := $ExitPoint
 
 
+var _mesh_initial_size: Vector2
+
+
 func _ready() -> void:
 	if 0 < exit_portal_paths.size():
 		self.exit_portal = get_node(exit_portal_paths[0])
 #	_viewport.size = get_viewport().size
 #	var aspect_ratio := get_viewport().size.y / get_viewport().size.x
 	var aspect_ratio: float = _surface.mesh.size.y / _surface.mesh.size.x
+
+#	_viewport.size.x = get_viewport().size.x
+#	_viewport.size.y = get_viewport().size.x * aspect_ratio
+	_viewport.size = _surface.mesh.size * pixels_per_unit
 	
-	_viewport.size.x = get_viewport().size.x
-	_viewport.size.y = get_viewport().size.x * aspect_ratio
-	
+	_mesh_initial_size = _surface.mesh.size
 #	_viewport.size = _surface.mesh.size * pixels_per_unit
 #	_surface.get_surface_material(0).albedo_texture = _viewport.get_texture()
 
@@ -105,7 +110,12 @@ func _process(_delta: float) -> void:
 	var z_far := main_cam.far
 	var x_size: float = _surface.mesh.size.x
 	_camera.set_frustum(x_size, -frustum_offset, cam_distance, z_far)
-
+#	_surface.get_surface_material(0).set_shader_param("scale", cam_distance)
+#	_surface.get_surface_material(0).set_shader_param("offset", frustum_offset)
+#	if cam_distance < 0.2:
+#		_surface.mesh.size = _mesh_initial_size * (cam_distance / 0.2)
+#	else:
+#		_surface.mesh.size = _mesh_initial_size
 
 
 func _set_exit_portal(value: PortalFrustum) -> void:

@@ -111,6 +111,8 @@ func receive_body(body: PhysicsBody, info: BodyInfo) -> void:
 		return
 	
 	_body_info[body] = info
+#	_clear_collision_exceptions(body)
+#	_set_collision_exceptions(body)
 
 
 func _will_player_cross_next_frame(player: Player, delta: float) -> bool:
@@ -193,6 +195,26 @@ func _set_exit_portal(value: Portal) -> void:
 	exit_portal = value
 
 
+func _clear_collision_exceptions(physics_body : PhysicsBody) -> void:
+	for exception in physics_body.get_collision_exceptions():
+		physics_body.remove_collision_exception_with(exception)
+
+
+func _set_collision_exceptions(physics_body: PhysicsBody) -> void:
+	var space_state := get_world().direct_space_state
+	var query_shape := PhysicsShapeQueryParameters.new()
+	query_shape.set_shape($BackArea/CollisionShape.shape)
+	query_shape.transform = $BackArea.transform
+	var query_results := space_state.intersect_shape(query_shape)
+	for intersection in query_results:
+		var collider = intersection.collider
+		if physics_body == collider:
+			continue # skip self
+		if _body_info.has(collider):
+			continue # skip objects in this portal
+		physics_body.add_collision_exception_with(collider)
+
+
 func _attach_body(physics_body: PhysicsBody) -> void:
 	var real_collision_layer := physics_body.collision_layer
 	var real_collision_mask := physics_body.collision_mask
@@ -220,6 +242,9 @@ func _attach_body(physics_body: PhysicsBody) -> void:
 		Utils.CollisionLayers.PORTAL_STATIC |
 		Utils.CollisionLayers.ENTITY_IN_PORTAL
 	)
+
+#	_clear_collision_exceptions(physics_body)
+#	_set_collision_exceptions(physics_body)
 
 	var double: PhysicsBody
 	if physics_body is Player:
@@ -253,6 +278,8 @@ func _attach_body(physics_body: PhysicsBody) -> void:
 func _detach_body(physics_body: PhysicsBody) -> void:
 	if not _body_info.has(physics_body):
 		return
+
+	_clear_collision_exceptions(physics_body)
 
 	var info: BodyInfo = _body_info[physics_body]
 	var double = info.double

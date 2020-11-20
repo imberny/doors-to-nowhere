@@ -10,16 +10,22 @@ uniform vec3 portal_plane;
 uniform float portal_plane_dist;
 
 
-bool portal_culls(vec3 vertex, mat4 cam) {
-	vec3 pos = (cam * vec4(vertex, 1.0)).xyz;
+bool is_behind_plane(vec4 pos) {
 	return portal_plane.x * pos.x
 			+ portal_plane.y * pos.y
 			+ portal_plane.z * pos.z
-			+ portal_plane_dist < -0.0001;
+			+ portal_plane_dist > 0.1f;
 }
 
+//void vertex() {
+//	if (is_behind_plane(CAMERA_MATRIX * vec4(VERTEX, 1.0))) {
+//		COLOR = vec4(1.0);
+//	} 
+//}
+
+
 void fragment() {
-	if (portal_culls(VERTEX, CAMERA_MATRIX)) {
+	if (is_behind_plane(CAMERA_MATRIX * vec4(VERTEX, 1.0))) {
 		discard;
 	} else {
 		vec4 mask_value = texture(portal_mask, UV);
