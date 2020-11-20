@@ -32,7 +32,7 @@ radius = 0.4
 height = 0.4
 
 [node name="Player" type="KinematicBody"]
-transform = Transform( 0.980645, 0, 0.195792, 0, 1, 0, -0.195792, 0, 0.980645, 1.28645, 1, 2.35648 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
 collision_mask = 6
 script = ExtResource( 1 )
 
@@ -80,4 +80,6 @@ cull_mask = 1048573
 near = 0.01
 
 [node name="RayCast" type="RayCast" parent="Camera"]
+enabled = true
 cast_to = Vector3( 0, 0, -20 )
+collision_mask = 2

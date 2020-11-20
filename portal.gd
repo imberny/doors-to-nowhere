@@ -111,8 +111,8 @@ func receive_body(body: PhysicsBody, info: BodyInfo) -> void:
 		return
 	
 	_body_info[body] = info
-#	_clear_collision_exceptions(body)
-#	_set_collision_exceptions(body)
+	_clear_collision_exceptions(body)
+	set_collision_exceptions(body)
 
 
 func _will_player_cross_next_frame(player: Player, delta: float) -> bool:
@@ -200,11 +200,11 @@ func _clear_collision_exceptions(physics_body : PhysicsBody) -> void:
 		physics_body.remove_collision_exception_with(exception)
 
 
-func _set_collision_exceptions(physics_body: PhysicsBody) -> void:
+func set_collision_exceptions(physics_body: PhysicsBody) -> void:
 	var space_state := get_world().direct_space_state
 	var query_shape := PhysicsShapeQueryParameters.new()
 	query_shape.set_shape($BackArea/CollisionShape.shape)
-	query_shape.transform = $BackArea.transform
+	query_shape.transform = $BackArea.global_transform
 	var query_results := space_state.intersect_shape(query_shape)
 	for intersection in query_results:
 		var collider = intersection.collider
@@ -219,36 +219,45 @@ func _attach_body(physics_body: PhysicsBody) -> void:
 	var real_collision_layer := physics_body.collision_layer
 	var real_collision_mask := physics_body.collision_mask
 	
-	# replace collision layer with entity in portal
-	physics_body.collision_layer = Utils.bit_mask_unset(
-		physics_body.collision_layer,
-		Utils.CollisionLayers.PLAYER |
-		Utils.CollisionLayers.DYNAMIC
-	)
-	physics_body.collision_layer = Utils.bit_mask_set(
-		physics_body.collision_layer,
-		Utils.CollisionLayers.ENTITY_IN_PORTAL
-	)
+#	# replace collision layer with entity in portal
+#	physics_body.collision_layer = Utils.bit_mask_unset(
+#		physics_body.collision_layer,
+#		Utils.CollisionLayers.PLAYER |
+#		Utils.CollisionLayers.DYNAMIC
+#	)
+#	physics_body.collision_layer = Utils.bit_mask_set(
+#		physics_body.collision_layer,
+#		Utils.CollisionLayers.ENTITY_IN_PORTAL
+#	)
+#
+#	# replace collision mask with an altered one while in portal
+#	physics_body.collision_mask = Utils.bit_mask_unset(
+#		physics_body.collision_mask,
+#		Utils.CollisionLayers.PLAYER |
+#		Utils.CollisionLayers.STATIC |
+#		Utils.CollisionLayers.DYNAMIC
+#	)
+#	physics_body.collision_mask = Utils.bit_mask_set(
+#		physics_body.collision_mask,
+#		Utils.CollisionLayers.PORTAL_STATIC |
+#		Utils.CollisionLayers.ENTITY_IN_PORTAL
+#	)
 
-	# replace collision mask with an altered one while in portal
-	physics_body.collision_mask = Utils.bit_mask_unset(
-		physics_body.collision_mask,
-		Utils.CollisionLayers.PLAYER |
-		Utils.CollisionLayers.STATIC |
-		Utils.CollisionLayers.DYNAMIC
-	)
-	physics_body.collision_mask = Utils.bit_mask_set(
-		physics_body.collision_mask,
-		Utils.CollisionLayers.PORTAL_STATIC |
-		Utils.CollisionLayers.ENTITY_IN_PORTAL
-	)
-
-#	_clear_collision_exceptions(physics_body)
-#	_set_collision_exceptions(physics_body)
+	_clear_collision_exceptions(physics_body)
+	set_collision_exceptions(physics_body)
 
 	var double: PhysicsBody
 	if physics_body is Player:
 		double = KinematicBody.new()
+#		var shape_owners := physics_body.get_shape_owners()
+#		for owner_id in shape_owners:
+#			var shape_count := physics_body.shape_owner_get_shape_count(owner_id)
+#			for shape_idx in range(shape_count):
+#				var double_collision_shape := CollisionShape.new()
+#				double_collision_shape.shape = physics_body.shape_owner_get_shape(owner_id, shape_idx)
+		
+		double.add_child(physics_body.get_node("BodyShape").duplicate())
+
 		var double_body: MeshInstance = physics_body.model.duplicate()
 		var body_parts := Utils.children_to_list_recursive(double_body)
 		for part in body_parts:
@@ -265,6 +274,7 @@ func _attach_body(physics_body: PhysicsBody) -> void:
 	else:
 		double = physics_body.duplicate()
 	double.add_to_group("doubles")
+	self.exit_portal.set_collision_exceptions(double)
 	add_child(double)
 	double.global_transform = teleport_global_xform(physics_body.global_transform)
 	var info := BodyInfo.new(

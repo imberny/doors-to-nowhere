@@ -26,9 +26,9 @@ func _ready() -> void:
 
 
 func _shoot_primary() -> void:
-	pass
-#	if $Camera/RayCast.is_colliding():
-#		var point := $Camera/RayCast.get_collision_point()
+	if $Camera/RayCast.is_colliding():
+		var body = $Camera/RayCast.get_collider()
+		add_collision_exception_with(body)
 		
 
 
