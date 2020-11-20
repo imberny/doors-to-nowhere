@@ -27,7 +27,8 @@ func _ready() -> void:
 	if portal_path:
 		self.exit_portal = get_node(portal_path)
 	var plane_normal = global_transform.basis.z.normalized()
-	var plane_dist = global_transform.origin.project(plane_normal).length()
+#	var plane_dist = global_transform.origin.project(plane_normal).length()
+	var plane_dist = global_transform.origin.dot(plane_normal)
 	var portal_plane = Plane(plane_normal, plane_dist)
 	var portal_shader: ShaderMaterial = _surface.get_surface_material(0)
 	portal_shader.set_shader_param("portal_plane", -plane_normal)
