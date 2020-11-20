@@ -10,15 +10,14 @@ onready var _camera := $Viewport/Camera
 onready var _surface := $Surface
 onready var _exit_point := $ExitPoint
 onready var _body_info := {}
-onready var _bodies_in_teleport := {} # temp map for bodies being teleported
 
 class BodyInfo:
 	var double: PhysicsBody
 	var collision_layer: int
 	var collision_mask: int
 	
-	func _init(double: PhysicsBody, layer: int, mask: int) -> void:
-		self.double = double
+	func _init(body_double: PhysicsBody, layer: int, mask: int) -> void:
+		self.double = body_double
 		self.collision_layer = layer
 		self.collision_mask = mask
 
@@ -117,7 +116,6 @@ func receive_body(body: PhysicsBody, info: BodyInfo) -> void:
 func _will_player_cross_next_frame(player: Player, delta: float) -> bool:
 	var main_cam := get_viewport().get_camera()
 	var cam_pos := main_cam.global_transform.origin 
-	var cam_forward := -main_cam.global_transform.basis.z
 	# predict next cam position based on player velocity
 	var cam_next_pos := cam_pos + player.velocity * delta
 	
@@ -137,7 +135,6 @@ func _process(_delta) -> void:
 	var main_cam_origin = main_cam.global_transform.origin 
 
 	var forward := global_transform.basis.z.normalized()
-	var up := global_transform.basis.y.normalized()
 	var portal_plane := Plane(forward, global_transform.origin.dot(forward))
 	var cam_origin_on_portal := portal_plane.project(main_cam_origin)
 	var cam_distance := cam_origin_on_portal.distance_to(main_cam_origin)
@@ -159,7 +156,6 @@ func _physics_process(delta) -> void:
 				teleport_player(body)
 				double.global_transform = self.exit_portal.teleport_global_xform(double.global_transform)
 				bodies_to_remove.push_back(body)
-#				_bodies_in_teleport[body] = body
 		elif body is RigidBody:
 			var rigid_body := body as RigidBody
 			var info := _body_info[rigid_body] as BodyInfo
@@ -187,10 +183,9 @@ func _physics_process(delta) -> void:
 				var exit_up = exit_portal.global_transform.basis.y.normalized()
 				rigid_body.linear_velocity = exit_forward.rotated(exit_up, velocity_angle) * rigid_body.linear_velocity.length()
 				bodies_to_remove.push_back(rigid_body)
-#				_bodies_in_teleport[rigid_body] = rigid_body
 	for body in bodies_to_remove:
 		self.exit_portal.receive_body(body, _body_info[body])
-		_body_info.erase(body)
+		var _err = _body_info.erase(body)
 #		_detach_body(body)
 
 
@@ -261,7 +256,6 @@ func _detach_body(physics_body: PhysicsBody) -> void:
 
 	var info: BodyInfo = _body_info[physics_body]
 	var double = info.double
-	remove_child(double)
 	var _err = _body_info.erase(physics_body)
 	double.queue_free()
 	
@@ -283,10 +277,6 @@ func _on_body_entered(body):
 func _on_body_exited(body):
 	var physics_body := body as PhysicsBody
 	if not physics_body or body.is_in_group("doubles"):
-		return
-
-	if _bodies_in_teleport.has(body):
-		_bodies_in_teleport.erase(body)
 		return
 
 	_detach_body(physics_body)
