@@ -167,7 +167,7 @@ shape = SubResource( 6 )
 [node name="Geometry" type="Spatial" parent="."]
 
 [node name="Wall0" type="StaticBody" parent="Geometry"]
-transform = Transform( 6, 0, 0, 0, 4, 0, 0, 0, 6, 7, 2, -14 )
+transform = Transform( 6, 0, 0, 0, 4, 0, 0, 0, 2.4, 7, 2, -14 )
 collision_layer = 1026
 collision_mask = 5
 __meta__ = {
@@ -179,6 +179,21 @@ mesh = SubResource( 7 )
 material/0 = ExtResource( 3 )
 
 [node name="CollisionShape" type="CollisionShape" parent="Geometry/Wall0"]
+shape = SubResource( 8 )
+
+[node name="Wall7" type="StaticBody" parent="Geometry"]
+transform = Transform( 6, 0, 0, 0, 4, 0, 0, 0, 1.2, 7, 2, -11.6786 )
+collision_layer = 1026
+collision_mask = 5
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="MeshInstance" type="MeshInstance" parent="Geometry/Wall7"]
+mesh = SubResource( 7 )
+material/0 = ExtResource( 3 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Geometry/Wall7"]
 shape = SubResource( 8 )
 
 [node name="Wall1" type="StaticBody" parent="Geometry"]

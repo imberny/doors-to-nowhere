@@ -117,6 +117,17 @@ func _process(_delta) -> void:
 	var main_cam_origin = main_cam.global_transform.origin 
 
 	var forward := global_transform.basis.z.normalized()
+
+#	#REMOVE THIS
+#	for body in _body_info.keys():
+#		if body is Player:
+#			if (main_cam_origin - global_transform.origin).normalized().dot(forward) < 0:
+#				print("Hmmm.")
+#				print("cam origin: " + str(main_cam_origin))
+#				print("portal origin: " + str(global_transform.origin))
+#				return
+
+
 	var portal_plane := Plane(forward, global_transform.origin.dot(forward))
 	var cam_origin_on_portal := portal_plane.project(main_cam_origin)
 	var cam_distance := cam_origin_on_portal.distance_to(main_cam_origin)
@@ -189,13 +200,6 @@ func _intersect_behind() -> Array:
 	query_shape.set_shape(_zone_behind.shape)
 	query_shape.transform = _zone_behind.global_transform
 	return space_state.intersect_shape(query_shape)
-
-
-func _find_mesh_instance(body: PhysicsBody) -> MeshInstance:
-	for child in body.get_children():
-		if child is MeshInstance:
-			return child
-	return null
 
 
 func _clear_collision_exceptions(physics_body : PhysicsBody) -> void:
